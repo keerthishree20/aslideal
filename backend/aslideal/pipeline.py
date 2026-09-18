@@ -80,8 +80,8 @@ def offer_problem(o: Offer, mrp=None, price=None):
     name = o.seller.lower()
     if any(r in name for r in IMPORT_RESELLERS):
         return "import reseller"
-    # Selling above the printed M.R.P. is illegal in India, so a listing well
-    # above it is an import or a different product, not the going rate.
+    # The M.R.P. is the printed maximum retail price, so a listing well above it
+    # is an import or a different product, not the going rate.
     if mrp and o.price > ABOVE_MRP * mrp:
         return "priced above the M.R.P."
     if price and o.price < TOO_CHEAP * price:

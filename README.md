@@ -25,7 +25,7 @@ cp .env.example .env    # put your key after SERPAPI_KEY=
 
 Paste an amazon.in product link, or type a product name and pick the exact listing.
 
-Needs Python 3.9 or newer. Tests: `cd backend && .venv/bin/python -m pytest`.
+Needs Python 3.9 or newer. Tests, after `./run.sh` has run once to create the environment: `cd backend && .venv/bin/python -m pytest`.
 
 ## How SerpApi is used
 
@@ -51,7 +51,7 @@ A live check costs at most five searches. Every response is cached on disk, so r
    - it has the same memory, when the listing states one (8GB/128GB vs 8GB/256GB).
    - it isn't an accessory, a spare part, or a renewed unit.
    - it's in stock, sold in India, not an EMI or financing listing, and not an import reseller.
-   - it's priced at no more than 110% of the M.R.P. (selling above M.R.P. is illegal in India), and at no less than 40% of Amazon's price (below that, it's a part or a mislabelled listing).
+   - it's priced at no more than 110% of the printed M.R.P. (a listing well above it is an import or a different item), and at no less than 40% of Amazon's price (below that, it's a part or a mislabelled listing).
 
    Each seller counts once. Every rejected listing is shown in the report with its reason.
 4. **Street price.** The median of the other in-stock sellers. Amazon's own listings are never evidence for Amazon's claim.
@@ -82,7 +82,7 @@ The wording states what the prices show and nothing about intent.
 | Samsung Galaxy M36 5G | Not enough data |
 | Samsung Galaxy M56 5G | Listing had no price on Amazon.in |
 
-**4 of 8 reach a verdict.** The rest say so instead of guessing. Coverage is limited by how many Indian sellers Google indexes for an exact model. Phones are hardest, because a listing must state the same memory variant to count.
+**4 of 8 reach a verdict.** The rest say so instead of guessing. Three of the misses come from too few Indian sellers indexed by Google for the exact model, and one from Amazon.in showing no price for the listing. Phones are hardest, because a listing must state the same memory variant to count.
 
 ## Limitations
 
