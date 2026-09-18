@@ -4,9 +4,13 @@
 
 Amazon.in shows almost every product with a struck-through M.R.P. and a big percentage off. The M.R.P. is a legal maximum printed on the box, not the price anyone actually sells at. So "69% off" can mean a real bargain, or it can mean every store sells it at that price. AsliDeal tells you which, and shows the evidence.
 
-![AsliDeal report for boAt Airdopes Prime 412](docs/airdopes-report.png)
+![AsliDeal home page](docs/home.png)
 
 > **boAt Airdopes Prime 412**: Amazon.in shows ₹1,399, "69% off" an M.R.P. of ₹4,490. Flipkart and Zepto both sell it for ₹1,399, and no in-stock seller charges ₹4,490. Against the market, the saving is 0%.
+
+![AsliDeal report for boAt Airdopes Prime 412](docs/airdopes-report.png)
+
+Each report shows the verdict, every matching seller on one price axis with the M.R.P. and street price marked, the SerpApi calls that produced the evidence, and every listing that was left out and why. Checks can also come out the other way, as with the JBL Tune 520BT, where Amazon is really 17% cheaper: [report](docs/jbl-report.png).
 
 ## Run it
 

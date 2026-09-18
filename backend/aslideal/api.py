@@ -33,9 +33,8 @@ def _answer(fn, *args):
         raise HTTPException(502, f"SerpApi: {e}")
 
 
-@app.get("/api/status")
-def status():
-    """Demo or live, searches left, and the products the recorded data can answer."""
+def recorded_listings() -> list:
+    """Amazon.in listings already in the cache: the products that can be checked for free."""
     samples = []
     for p in sorted(serp.cache_dir.glob("*.json")):
         entry = json.loads(p.read_text())
@@ -44,11 +43,42 @@ def status():
         pr = entry["response"].get("product_results") or {}
         if pr.get("extracted_price"):
             samples.append({"asin": pr["asin"], "title": pr.get("title", ""), "thumbnail": pr.get("thumbnail")})
+    return samples
+
+
+@app.get("/api/status")
+def status():
+    """Demo or live, searches left, and the products the recorded data can answer."""
     try:
         quota = serp.quota()
     except Exception:  # the page still works if the account endpoint is down
         quota = None
-    return {"demo": serp.demo, "quota": quota, "samples": samples}
+    return {"demo": serp.demo, "quota": quota, "samples": recorded_listings()}
+
+
+@app.get("/api/gallery")
+def gallery():
+    """Verdicts for every product in the recorded data. Always replayed, never live,
+    so opening the home page doesn't spend searches."""
+    recorded = Serp(api_key="", cache_dir=serp.cache_dir, demo=True)
+    cards = []
+    for sample in recorded_listings():
+        try:
+            r = check(recorded, sample["asin"])
+        except DemoMiss:
+            continue
+        if "error" in r:
+            continue
+        v = r["verdict"]
+        cards.append({
+            "asin": sample["asin"], "title": r["listing"]["title"], "brand": r["listing"]["brand"],
+            "thumbnail": r["listing"]["thumbnail"], "kind": v["kind"], "price": v["price"], "mrp": v["mrp"],
+            "claimed_discount": v["claimed_discount"], "real_discount": v["real_discount"],
+            "street_price": v["street_price"], "sellers": v["sellers_used"],
+        })
+    order = ["reference_gap", "above_market", "real_deal", "going_rate", "unverified"]
+    cards.sort(key=lambda c: order.index(c["kind"]))
+    return cards
 
 
 @app.get("/api/search")

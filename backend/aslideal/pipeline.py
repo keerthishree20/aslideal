@@ -6,6 +6,7 @@ Shopping, Google web search, and up to two Immersive Product pages.
 
 import re
 from urllib.parse import urlparse
+from collections import Counter
 from dataclasses import asdict
 
 from . import match
@@ -112,7 +113,12 @@ def check(serp: Serp, asin: str) -> dict:
     shopping = serp.search(engine="google_shopping", q=shopping_q, gl="in", hl="en", location="India")
 
     result = {"listing": listing, "shopping_query": shopping_q, "matched_product": None,
-              "offers": [], "rejected": [], "verdict": None}
+              "offers": [], "rejected": [], "verdict": None, "trail": []}
+    # What each SerpApi call contributed, shown in the report as "How we checked".
+    trail = result["trail"]
+    mrp_text = f", M.R.P. ₹{listing['mrp']:,.0f}" if listing["mrp"] else ", no M.R.P. shown"
+    trail.append({"engine": "amazon_product", "query": asin,
+                  "found": f"Amazon.in listing at ₹{listing['price']:,.0f}{mrp_text}"})
     offers = {}
 
     def add(o: Offer):
@@ -134,9 +140,11 @@ def check(serp: Serp, asin: str) -> dict:
             continue  # a grouped "₹1,300+" result names no seller and no single price
         before = len(result["rejected"])
         add(Offer(seller=r["source"], price=r["extracted_price"], title=r.get("title", ""),
-                  link=r.get("product_link", "")))
+                  link=r.get("product_link", ""), logo=r.get("source_icon", "")))
         if len(result["rejected"]) == before and r.get("immersive_product_page_token"):
             candidates.append(r)
+    trail.append({"engine": "google_shopping", "query": shopping_q,
+                  "found": plural(len(shopping.get("shopping_results", [])), "shopping result")})
 
     # Google web search surfaces other products and retailer pages (Flipkart,
     # Croma, the brand's own store) that Google Shopping often leaves out.
@@ -145,15 +153,22 @@ def check(serp: Serp, asin: str) -> dict:
         if not r.get("source") or not r.get("extracted_price"):
             continue
         before = len(result["rejected"])
-        add(Offer(seller=r["source"], price=r["extracted_price"], title=r.get("title", ""), link=r.get("link", "")))
+        add(Offer(seller=r["source"], price=r["extracted_price"], title=r.get("title", ""), link=r.get("link", ""),
+                  logo=r.get("source_logo", "")))
         if len(result["rejected"]) == before and r.get("immersive_product_page_token"):
             candidates.append(r)
+    priced_pages = 0
     for r in web.get("organic_results", []):
         top = (r.get("rich_snippet") or {}).get("top") or {}
         price = (top.get("detected_extensions") or {}).get("price")  # a range ('₹18,080 to ₹28,993') is skipped
         if r.get("source") and price:
+            priced_pages += 1
             in_stock = not any("out of stock" in e.lower() for e in top.get("extensions", []))
-            add(Offer(seller=r["source"], price=price, in_stock=in_stock, title=r.get("title", ""), link=r.get("link", "")))
+            add(Offer(seller=r["source"], price=price, in_stock=in_stock, title=r.get("title", ""), link=r.get("link", ""),
+                      logo=r.get("favicon", "")))
+    trail.append({"engine": "google", "query": f"{shopping_q} price",
+                  "found": f"{plural(len(web.get('immersive_products', [])), 'product listing')}, "
+                           f"{plural(priced_pages, 'retailer page')} with a price"})
 
     # Opening a product lists every store that carries it. Amazon's own listing
     # only ever lists Amazon, so other sellers' listings are opened first.
@@ -174,16 +189,27 @@ def check(serp: Serp, asin: str) -> dict:
         for s in pr.get("stores", []):
             add(Offer(seller=s.get("name", "?"), price=s.get("extracted_total") or s.get("extracted_price") or 0,
                       in_stock=_in_stock(s), title=s.get("title") or pr.get("title") or best["title"],
-                      link=s.get("link", "")))
+                      link=s.get("link", ""), logo=s.get("logo", "")))
+        trail.append({"engine": "google_immersive_product", "query": best["title"][:80],
+                      "found": plural(len(pr.get("stores", [])), "store") + " selling it"})
         if len(_others(offers.values())) >= MIN_SELLERS:
             break
 
     final = sorted(offers.values(), key=lambda o: o.price)
     result["offers"] = [asdict(o) for o in final]
+    reasons = Counter(r["reason"] for r in result["rejected"])
+    trail.append({"engine": "match", "query": " ".join(match.identity(title, brand)),
+                  "found": f"{plural(len(_others(final)), 'other in-stock seller')} kept, "
+                           f"{plural(len(result['rejected']), 'listing')} left out",
+                  "reasons": dict(reasons.most_common())})
     result["verdict"] = asdict(judge(listing["price"], listing["mrp"], final))
     if not final:
         result["verdict"]["headline"] = "Couldn't find this exact product sold anywhere else, so there's nothing to compare against."
     return result
+
+
+def plural(n: int, word: str) -> str:
+    return f"{n} {word}" + ("" if n == 1 else "s")
 
 
 def _others(offers) -> list:

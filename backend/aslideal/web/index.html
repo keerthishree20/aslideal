@@ -3,83 +3,184 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AsliDeal</title>
+<title>AsliDeal · Is that discount real?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<main class="wrap">
-  <header class="top">
-    <div>
-      <h1>Asli<span>Deal</span></h1>
-      <p class="tag">Is that "% off" real? AsliDeal checks an Amazon.in discount against what other Indian stores charge for the same product today.</p>
+<header class="hero">
+  <div class="wrap">
+    <nav class="nav">
+      <a href="/" class="logo" id="home-link">Asli<span>Deal</span></a>
+      <span id="mode" class="chip" hidden></span>
+    </nav>
+
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Amazon.in discount checker</p>
+        <h1>Is that <em>"% off"</em> actually <span class="asli">asli</span>?</h1>
+        <p class="lede">Almost every product on Amazon.in shows a struck-through M.R.P. and a big discount. AsliDeal checks that discount against what other Indian stores charge for the same product today.</p>
+
+        <form id="form" class="ask" autocomplete="off">
+          <label for="q" class="sr">Amazon.in link or product name</label>
+          <input id="q" name="q" placeholder="Paste an amazon.in link or a product name" required>
+          <button type="submit">Check discount</button>
+        </form>
+
+        <ul class="proof">
+          <li><b>5</b> SerpApi engines per check</li>
+          <li><b>Strict</b> same-model matching</li>
+          <li><b>Every</b> rejected listing shown</li>
+        </ul>
+      </div>
+
+      <aside id="teaser" class="teaser" hidden>
+        <p class="teaser-kicker">Example check</p>
+        <div class="teaser-top">
+          <img id="t-img" alt="">
+          <div>
+            <p id="t-name" class="teaser-name"></p>
+            <p class="teaser-claim"><span id="t-mrp" class="strike"></span> <b id="t-price"></b></p>
+          </div>
+        </div>
+        <div class="teaser-nums">
+          <div><span class="big" id="t-claimed"></span><span class="cap">Amazon's "% off"</span></div>
+          <div class="vs">vs</div>
+          <div><span class="big good" id="t-real"></span><span class="cap">cheaper than other stores</span></div>
+        </div>
+        <p id="t-line" class="teaser-line"></p>
+        <button id="t-open" type="button" class="ghost">See the evidence →</button>
+      </aside>
     </div>
-    <span id="mode" class="chip" hidden></span>
-  </header>
+  </div>
+</header>
 
-  <form id="form" class="ask" autocomplete="off">
-    <label for="q" class="sr">Amazon.in link or product name</label>
-    <input id="q" name="q" placeholder="Paste an amazon.in link, or type a product name" required>
-    <button type="submit">Check</button>
-  </form>
-
-  <section id="samples" class="samples" hidden>
-    <span class="muted">Try:</span>
-    <div id="sample-list" class="sample-list"></div>
-  </section>
-
+<main class="wrap">
   <p id="msg" class="msg" role="status" hidden></p>
 
+  <section id="progress" class="progress" hidden aria-live="polite">
+    <h2>Checking the discount…</h2>
+    <ol id="steps" class="steps"></ol>
+  </section>
+
   <section id="results" hidden>
-    <h2 class="section-title">Pick the exact product</h2>
+    <div class="section-head"><h2>Pick the exact product</h2><p class="muted">Amazon.in shows several listings for that name. Pick the one you mean.</p></div>
     <ul id="result-list" class="result-list"></ul>
   </section>
 
+  <section id="gallery-box">
+    <div class="section-head">
+      <h2>Already checked</h2>
+      <p class="muted">Real Amazon.in listings checked against Indian stores. Click one to see the evidence.</p>
+    </div>
+    <div id="gallery" class="gallery"></div>
+  </section>
+
   <section id="report" hidden>
+    <button id="back" type="button" class="back">← All checks</button>
+
     <article id="verdict" class="verdict">
-      <div class="verdict-head">
+      <div class="v-product">
         <img id="v-thumb" alt="" hidden>
         <div>
-          <span id="v-label" class="label"></span>
+          <p id="v-brand" class="v-brand"></p>
           <h2 id="v-title" class="v-title"></h2>
-          <a id="v-link" class="muted small" target="_blank" rel="noopener">View on Amazon.in</a>
+          <p class="v-amazon">
+            <span>On Amazon.in</span>
+            <b id="v-price"></b>
+            <span id="v-mrp" class="strike"></span>
+            <a id="v-link" target="_blank" rel="noopener">Open listing ↗</a>
+          </p>
         </div>
       </div>
-      <p id="v-headline" class="headline"></p>
-      <div id="bars" class="bars"></div>
-      <div id="strip" class="strip" hidden></div>
+
+      <div class="v-call">
+        <span id="v-label" class="label"></span>
+        <p id="v-headline" class="headline"></p>
+      </div>
+
+      <div class="score">
+        <div class="tile">
+          <span class="tile-cap">Amazon's claim</span>
+          <span class="tile-num" id="s-claimed"></span>
+          <span class="tile-sub" id="s-claimed-sub"></span>
+        </div>
+        <div class="tile tile-real">
+          <span class="tile-cap" id="s-real-cap">Against other stores</span>
+          <span class="tile-num" id="s-real"></span>
+          <span class="tile-sub" id="s-real-sub"></span>
+        </div>
+        <div class="tile">
+          <span class="tile-cap">Street price</span>
+          <span class="tile-num" id="s-street"></span>
+          <span class="tile-sub" id="s-street-sub"></span>
+        </div>
+      </div>
       <ul id="v-notes" class="notes"></ul>
     </article>
 
-    <h2 class="section-title">Who sells it, and for how much</h2>
-    <div class="table-wrap">
-      <table class="sellers">
-        <thead><tr><th>Seller</th><th class="num">Price</th><th>Stock</th><th>Listing</th></tr></thead>
-        <tbody id="seller-rows"></tbody>
-      </table>
-    </div>
-
-    <details id="rejected-box" class="rejected">
-      <summary id="rejected-sum"></summary>
-      <p class="muted small">A wrong comparison is worse than none, so these listings didn't count as evidence.</p>
-      <div class="table-wrap">
-        <table class="sellers">
-          <thead><tr><th>Seller</th><th class="num">Price</th><th>Why it was left out</th><th>Listing</th></tr></thead>
-          <tbody id="rejected-rows"></tbody>
-        </table>
+    <article class="card">
+      <div class="card-head">
+        <h3>What each store charges</h3>
+        <div class="legend">
+          <span><i class="lg lg-amazon"></i>Amazon.in (the claim)</span>
+          <span><i class="lg lg-seller"></i>Other store</span>
+          <span><i class="lg lg-oos"></i>Out of stock</span>
+          <span><i class="lg lg-street"></i><span id="lg-street">Street price</span></span>
+          <span><i class="lg lg-mrp"></i><span id="lg-mrp">M.R.P.</span></span>
+        </div>
       </div>
-    </details>
+      <div id="chart" class="chart"></div>
+      <div id="tip" class="tip" hidden></div>
+      <details class="table-view">
+        <summary>Table view</summary>
+        <div class="table-wrap">
+          <table class="sellers">
+            <thead><tr><th>Seller</th><th class="num">Price</th><th>Stock</th><th>Listing</th></tr></thead>
+            <tbody id="seller-rows"></tbody>
+          </table>
+        </div>
+      </details>
+    </article>
+
+    <div class="two">
+      <article class="card">
+        <h3>How we checked</h3>
+        <ol id="trail" class="trail"></ol>
+      </article>
+      <article class="card">
+        <h3>What we left out, and why</h3>
+        <p class="muted small">A wrong comparison is worse than none. These listings didn't count as evidence.</p>
+        <div id="reasons" class="reasons"></div>
+        <details id="rejected-box" class="table-view">
+          <summary id="rejected-sum"></summary>
+          <div class="table-wrap">
+            <table class="sellers">
+              <thead><tr><th>Seller</th><th class="num">Price</th><th>Reason</th><th>Listing</th></tr></thead>
+              <tbody id="rejected-rows"></tbody>
+            </table>
+          </div>
+        </details>
+      </article>
+    </div>
   </section>
 
-  <footer class="how">
-    <h2 class="section-title">How it works</h2>
-    <ol>
-      <li><b>The claim.</b> SerpApi's <code>amazon_product</code> engine reads the listing's price and its struck-through M.R.P.</li>
-      <li><b>The market.</b> <code>google_shopping</code>, <code>google</code> web search and <code>google_immersive_product</code> find every Indian store selling the same model.</li>
-      <li><b>The match.</b> Listings count only if they're the same model and memory, new, in stock, sold in India and priced within the M.R.P. Accessories, spare parts, EMI listings and import resellers are left out.</li>
-      <li><b>The verdict.</b> The median of the other sellers is the street price. A big "% off" that saves nothing against the street price is measured from a price nobody charges.</li>
-    </ol>
-  </footer>
+  <section class="how">
+    <div class="section-head"><h2>How it works</h2></div>
+    <div class="how-grid">
+      <div class="how-step"><span class="n">1</span><h3>The claim</h3><p><code>amazon_product</code> reads the listing's price and its struck-through M.R.P.</p></div>
+      <div class="how-step"><span class="n">2</span><h3>The market</h3><p><code>google_shopping</code>, <code>google</code> search and <code>google_immersive_product</code> find Indian stores selling it.</p></div>
+      <div class="how-step"><span class="n">3</span><h3>The match</h3><p>Same model, same memory, new, in stock, sold in India, priced within the M.R.P. Accessories, parts, EMI listings and import resellers are dropped.</p></div>
+      <div class="how-step"><span class="n">4</span><h3>The verdict</h3><p>The median of other sellers is the street price. A big "% off" that saves nothing against it is measured from a price nobody charges.</p></div>
+    </div>
+  </section>
 </main>
+
+<footer class="foot">
+  <div class="wrap">AsliDeal · data from <a href="https://serpapi.com" target="_blank" rel="noopener">SerpApi</a> · prices change, so every check is a snapshot of today</div>
+</footer>
 <script src="/static/app.js"></script>
 </body>
 </html>

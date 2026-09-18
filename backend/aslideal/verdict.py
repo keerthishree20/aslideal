@@ -35,6 +35,7 @@ class Offer:
     in_stock: bool = True
     title: str = ""
     link: str = ""
+    logo: str = ""
 
 
 @dataclass
