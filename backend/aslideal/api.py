@@ -1,0 +1,84 @@
+"""HTTP API and the single-page UI.
+
+    uvicorn aslideal.api:app --port 8000
+
+Without a SERPAPI_KEY (or with DEMO_MODE=1) every answer comes from the
+recorded responses in fixtures/cache, so the app works on a fresh clone.
+"""
+
+import json
+from pathlib import Path
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from .pipeline import amazon_search, check, parse_asin
+from .serp import ROOT, DemoMiss, Serp, SerpError
+
+load_dotenv(ROOT / ".env")
+WEB = Path(__file__).resolve().parent / "web"
+
+app = FastAPI(title="AsliDeal")
+serp = Serp()
+
+
+def _answer(fn, *args):
+    try:
+        return fn(serp, *args)
+    except DemoMiss as e:
+        raise HTTPException(404, str(e))
+    except SerpError as e:
+        raise HTTPException(502, f"SerpApi: {e}")
+
+
+@app.get("/api/status")
+def status():
+    """Demo or live, searches left, and the products the recorded data can answer."""
+    samples = []
+    for p in sorted(serp.cache_dir.glob("*.json")):
+        entry = json.loads(p.read_text())
+        if entry["params"].get("engine") != "amazon_product":
+            continue
+        pr = entry["response"].get("product_results") or {}
+        if pr.get("extracted_price"):
+            samples.append({"asin": pr["asin"], "title": pr.get("title", ""), "thumbnail": pr.get("thumbnail")})
+    try:
+        quota = serp.quota()
+    except Exception:  # the page still works if the account endpoint is down
+        quota = None
+    return {"demo": serp.demo, "quota": quota, "samples": samples}
+
+
+@app.get("/api/search")
+def search(q: str):
+    """A product name returns Amazon.in listings to pick from; a link or ASIN goes straight to a check."""
+    q = q.strip()
+    if not q:
+        raise HTTPException(400, "Type a product name or paste an amazon.in link.")
+    asin = parse_asin(q)
+    if asin:
+        return {"asin": asin, "results": []}
+    if "amazon." in q or "amzn." in q:
+        raise HTTPException(400, "Couldn't find a product ID in that link. Open the product page and copy its address.")
+    return {"asin": None, "results": _answer(amazon_search, q)}
+
+
+@app.get("/api/check/{asin}")
+def check_asin(asin: str):
+    asin = parse_asin(asin)
+    if not asin:
+        raise HTTPException(400, "That isn't an Amazon product ID.")
+    result = _answer(check, asin)
+    if "error" in result:
+        raise HTTPException(422, result["error"])
+    return result
+
+
+@app.get("/")
+def index():
+    return FileResponse(WEB / "index.html")
+
+
+app.mount("/static", StaticFiles(directory=WEB), name="static")

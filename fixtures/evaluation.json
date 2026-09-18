@@ -1,0 +1,78 @@
+[
+ {
+  "asin": "B0FDFRGWN8",
+  "name": "boAt Airdopes Prime 412",
+  "kind": "reference_gap",
+  "headline": "\"69% off\" is measured from ₹4,490, which none of the 2 other in-stock sellers charge. They sell it for about ₹1,399, so the saving vs the market is 0%.",
+  "sellers": 2,
+  "price": 1399,
+  "mrp": 4490,
+  "street": 1399.0
+ },
+ {
+  "asin": "B0C3V5X3QT",
+  "name": "JBL Tune 520BT",
+  "kind": "real_deal",
+  "headline": "Real saving: 17% below the ₹3,599 that 6 other in-stock sellers charge.",
+  "sellers": 6,
+  "price": 3005,
+  "mrp": 4999,
+  "street": 3599.0
+ },
+ {
+  "asin": "B01GZSQJPA",
+  "name": "Philips HL7756 mixer grinder",
+  "kind": "real_deal",
+  "headline": "Real saving: 10% below the ₹3,899 that 3 other in-stock sellers charge.",
+  "sellers": 3,
+  "price": 3499,
+  "mrp": 4795,
+  "street": 3899.0
+ },
+ {
+  "asin": "B00YMJ0OI8",
+  "name": "Prestige PIC 20 induction cooktop",
+  "kind": "reference_gap",
+  "headline": "\"36% off\" is measured from ₹3,645, which none of the 2 other in-stock sellers charge. They sell it for about ₹2,471, so the saving vs the market is 6%.",
+  "sellers": 2,
+  "price": 2330,
+  "mrp": 3645,
+  "street": 2471.0
+ },
+ {
+  "asin": "B0F7LXZG7S",
+  "name": "Redmi Note 14 Pro 5G",
+  "kind": "unverified",
+  "headline": "Only 0 other in-stock seller found. That's not enough to tell what this product normally sells for.",
+  "sellers": 0,
+  "price": 25939,
+  "mrp": 28999,
+  "street": null
+ },
+ {
+  "asin": "B0DGXRLS1C",
+  "name": "Noise Pro 6 smart watch",
+  "kind": "unverified",
+  "headline": "Only 1 other in-stock seller found. That's not enough to tell what this product normally sells for.",
+  "sellers": 0,
+  "price": 5499,
+  "mrp": 8999,
+  "street": null
+ },
+ {
+  "asin": "B0F43VZ4H1",
+  "name": "Samsung Galaxy M56 5G",
+  "kind": "error",
+  "headline": "Amazon.in has no price for B0F43VZ4H1. The listing may be unavailable."
+ },
+ {
+  "asin": "B0FDB9ZCTD",
+  "name": "Samsung Galaxy M36 5G",
+  "kind": "unverified",
+  "headline": "Couldn't find this exact product on Google Shopping, so there's nothing to compare against.",
+  "sellers": 0,
+  "price": 23999,
+  "mrp": 26999,
+  "street": null
+ }
+]
