@@ -36,8 +36,9 @@ Every piece of data comes from SerpApi. There is no other source.
 On first run, `run.sh` finds a Python of 3.9 or newer, creates `backend/.venv`, and installs the
 dependencies. It then serves the app with uvicorn.
 
-With no API key it runs in **demo mode** on recorded responses. Pick any product under "Try" to see a
-full report, with nothing fetched from the network.
+With no API key it runs in **demo mode** on recorded responses. Click any product in the "Already
+checked" gallery, or "See the evidence" on the example card, to see a full report. Nothing is fetched
+from the network.
 
 To check any product live:
 
@@ -95,7 +96,7 @@ The wording states what the prices show and says nothing about anyone's intent.
 
 ```
   Browser  backend/aslideal/web/  index.html, app.js, style.css
-     │  GET /api/status, /api/search?q=, /api/check/{asin}
+     │  GET /api/status, /api/gallery, /api/search?q=, /api/check/{asin}
      ▼
   FastAPI  backend/aslideal/api.py   (serves the page too)
      │
@@ -131,7 +132,18 @@ A live check costs at most five searches.
    engines return candidate listings.
 4. `same_product()` and `offer_problem()` accept or reject each candidate, recording the reason.
 5. `judge()` computes the street price from the accepted sellers and picks the verdict.
-6. The page shows the verdict, the accepted sellers, and every rejected listing with its reason.
+6. `check()` also records a **trail**: one entry per SerpApi call with what it returned, and a final
+   entry counting the listings kept and left out, grouped by reason.
+7. The page shows the report:
+   - the verdict, with three numbers: Amazon's claimed discount, the real saving against other
+     stores, and the street price,
+   - a price chart with one row per seller (with the store's logo), and the M.R.P. and street price
+     drawn as reference lines,
+   - "How we checked", built from the trail,
+   - "What we left out, and why", with every rejected listing and its reason.
+
+The page address becomes `#check/<ASIN>`, so each report has its own link and the browser's back
+button returns to the gallery.
 
 ---
 
@@ -141,10 +153,10 @@ A live check costs at most five searches.
 |---|---|
 | `backend/aslideal/serp.py` | `Serp` client. `cache_key()` hashes the request parameters. `DemoMiss` is raised in demo mode for anything not recorded. `quota()` reads searches left |
 | `backend/aslideal/match.py` | `tokens()`, `core_name()`, `identity()`, `describing_words()`, `is_accessory()`, `same_product()`, `similarity()`, `search_query()` |
-| `backend/aslideal/pipeline.py` | `parse_asin()`, `amazon_search()`, `amazon_product()`, `offer_problem()`, `check()` |
-| `backend/aslideal/verdict.py` | `Offer`, `Verdict`, `judge()`, `is_own()` for Amazon's own listings, `rupees()` and `pct()` formatting |
-| `backend/aslideal/api.py` | the FastAPI app, `.env` loading, the three API routes and the page |
-| `backend/aslideal/web/` | the single-page front end |
+| `backend/aslideal/pipeline.py` | `parse_asin()`, `amazon_search()`, `amazon_product()`, `offer_problem()`, `check()`, which also builds the trail |
+| `backend/aslideal/verdict.py` | `Offer` (seller, price, stock, title, link, store logo), `Verdict`, `judge()`, `is_own()` for Amazon's own listings, `rupees()` and `pct()` formatting |
+| `backend/aslideal/api.py` | the FastAPI app, `.env` loading, `recorded_listings()`, the four API routes and the page |
+| `backend/aslideal/web/` | the single-page front end: `index.html`, `style.css` (light and dark), `app.js` (gallery, progress steps, report, price chart) |
 | `backend/scripts/evaluate.py` | runs the fixed evaluation set and reports how many reach a verdict |
 
 ---
@@ -154,8 +166,9 @@ A live check costs at most five searches.
 | method | path | returns |
 |---|---|---|
 | `GET` | `/api/status` | demo or live, searches left, and the products the recorded data can answer |
+| `GET` | `/api/gallery` | a verdict summary for every recorded product. Always replayed from the cache, so loading the home page never spends a search |
 | `GET` | `/api/search?q=` | Amazon.in listings matching a product name |
-| `GET` | `/api/check/{asin}` | the full report for one listing |
+| `GET` | `/api/check/{asin}` | the full report for one listing: `listing`, `verdict`, `offers`, `rejected` and `trail` |
 | `GET` | `/` | the page |
 
 ---
@@ -229,11 +242,17 @@ You are in demo mode, and only the recorded products work. Add `SERPAPI_KEY` to 
 checks, and make sure `DEMO_MODE` is not set to `1`.
 
 ### "Not enough data" for a product you know is widely sold
-Fewer than two other in-stock sellers passed the matching rules. Open the rejected listings in the
-report to see why each was excluded.
+Fewer than two other in-stock sellers passed the matching rules. "What we left out, and why" in the
+report shows each excluded listing and its reason.
+
+### A live check shows the progress steps for a while
+A live check makes up to five SerpApi calls and takes about half a minute. The steps on screen are
+paced by a timer, not by the server; the real record of each call is in "How we checked" once the
+report loads.
 
 ### `run.sh` says it needs Python 3.9 or newer
-Install Python 3.12. The system `python3` on this machine is 3.6.
+Install Python 3.9 or newer (3.12 is tested). `run.sh` tries `python3.13` down to `python3.9` before
+plain `python3`, so an old default `python3` is fine as long as a newer one is installed.
 
 ### Searches run out
 The free SerpApi plan has a monthly limit, shown by `/api/status`. Repeated checks are free because
