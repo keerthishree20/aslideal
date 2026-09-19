@@ -10,7 +10,7 @@ Amazon.in shows almost every product with a struck-through M.R.P. and a big perc
 
 ![AsliDeal report for boAt Airdopes Prime 412](docs/airdopes-report.png)
 
-Each report shows the verdict, every matching seller on one price axis with the M.R.P. and street price marked, the SerpApi calls that produced the evidence, and every listing that was left out and why. Checks can also come out the other way, as with the JBL Tune 520BT, where Amazon is really 17% cheaper: [report](docs/jbl-report.png).
+Each report shows the verdict as two gauges (claimed discount vs real saving), every matching seller on one price axis with the M.R.P. and street price marked, the SerpApi calls that produced the evidence, and every listing that was left out and why. Checks can also come out the other way, as with the JBL Tune 520BT, where Amazon is really 17% cheaper: [report](docs/jbl-report.png).
 
 ## Run it
 
@@ -18,7 +18,7 @@ Each report shows the verdict, every matching seller on one price axis with the 
 ./run.sh            # http://localhost:8000
 ```
 
-That's it. With no API key it runs in **demo mode** on the recorded SerpApi responses in `fixtures/cache/`: pick any product under "Try" to see a full report. Nothing is fetched from the network.
+That's it. With no API key it runs in **demo mode** on the recorded SerpApi responses in `fixtures/cache/`: click any product in the "Checked products" gallery to see a full report. Nothing is fetched from the network.
 
 To check any product live, get a free key at [serpapi.com](https://serpapi.com), then:
 

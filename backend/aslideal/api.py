@@ -75,6 +75,9 @@ def gallery():
             "thumbnail": r["listing"]["thumbnail"], "kind": v["kind"], "price": v["price"], "mrp": v["mrp"],
             "claimed_discount": v["claimed_discount"], "real_discount": v["real_discount"],
             "street_price": v["street_price"], "sellers": v["sellers_used"],
+            # every listing looked at for this product, kept or not
+            "screened": len(r["offers"]) + len(r["rejected"]),
+            "left_out": len(r["rejected"]),
         })
     order = ["reference_gap", "above_market", "real_deal", "going_rate", "unverified"]
     cards.sort(key=lambda c: order.index(c["kind"]))

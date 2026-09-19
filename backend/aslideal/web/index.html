@@ -3,126 +3,115 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>AsliDeal · Is that discount real?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="hero">
-  <div class="wrap">
-    <nav class="nav">
-      <a href="/" class="logo" id="home-link">Asli<span>Deal</span></a>
-      <span id="mode" class="chip" hidden></span>
+<div class="bg" aria-hidden="true"><div class="bg-grid"></div><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a href="#" class="logo" id="home-link"><span class="mark" aria-hidden="true">₹</span><span>Asli<b>Deal</b></span></a>
+    <nav class="links" aria-label="Sections">
+      <a href="#checks">Checked products</a>
+      <a href="#how">How it works</a>
     </nav>
-
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <p class="eyebrow">Amazon.in discount checker</p>
-        <h1>Is that <em>"% off"</em> actually <span class="asli">asli</span>?</h1>
-        <p class="lede">Almost every product on Amazon.in shows a struck-through M.R.P. and a big discount. AsliDeal checks that discount against what other Indian stores charge for the same product today.</p>
-
-        <form id="form" class="ask" autocomplete="off">
-          <label for="q" class="sr">Amazon.in link or product name</label>
-          <input id="q" name="q" placeholder="Paste an amazon.in link or a product name" required>
-          <button type="submit">Check discount</button>
-        </form>
-
-        <ul class="proof">
-          <li><b>5</b> SerpApi engines per check</li>
-          <li><b>Strict</b> same-model matching</li>
-          <li><b>Every</b> rejected listing shown</li>
-        </ul>
-      </div>
-
-      <aside id="teaser" class="teaser" hidden>
-        <p class="teaser-kicker">Example check</p>
-        <div class="teaser-top">
-          <img id="t-img" alt="">
-          <div>
-            <p id="t-name" class="teaser-name"></p>
-            <p class="teaser-claim"><span id="t-mrp" class="strike"></span> <b id="t-price"></b></p>
-          </div>
-        </div>
-        <div class="teaser-nums">
-          <div><span class="big" id="t-claimed"></span><span class="cap">Amazon's "% off"</span></div>
-          <div class="vs">vs</div>
-          <div><span class="big good" id="t-real"></span><span class="cap">cheaper than other stores</span></div>
-        </div>
-        <p id="t-line" class="teaser-line"></p>
-        <button id="t-open" type="button" class="ghost">See the evidence →</button>
-      </aside>
-    </div>
+    <span id="mode" class="status" hidden></span>
   </div>
 </header>
 
-<main class="wrap">
-  <p id="msg" class="msg" role="status" hidden></p>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <span class="pill"><span class="pulse"></span>Powered by 5 SerpApi engines</span>
+      <h1>Is that <span class="quote">"% off"</span><br>actually <span class="grad">asli</span>?</h1>
+      <p class="lede">Amazon.in puts a struck-through M.R.P. and a big discount on almost everything. AsliDeal checks that discount against what other Indian stores charge for the same product today, and shows the evidence.</p>
 
-  <section id="progress" class="progress" hidden aria-live="polite">
-    <h2>Checking the discount…</h2>
-    <ol id="steps" class="steps"></ol>
-  </section>
+      <form id="form" class="cmd" autocomplete="off">
+        <svg class="cmd-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <label for="q" class="sr">Amazon.in link or product name</label>
+        <input id="q" name="q" placeholder="Paste an amazon.in link or a product name" required>
+        <kbd title="Press / to search">/</kbd>
+        <button type="submit" id="go">Check</button>
+      </form>
+      <div id="try" class="try" hidden><span>Try</span></div>
 
-  <section id="results" hidden>
-    <div class="section-head"><h2>Pick the exact product</h2><p class="muted">Amazon.in shows several listings for that name. Pick the one you mean.</p></div>
-    <ul id="result-list" class="result-list"></ul>
-  </section>
-
-  <section id="gallery-box">
-    <div class="section-head">
-      <h2>Already checked</h2>
-      <p class="muted">Real Amazon.in listings checked against Indian stores. Click one to see the evidence.</p>
+      <dl class="stats">
+        <div><dt>Products checked</dt><dd data-count="stat-products">0</dd></div>
+        <div><dt>Listings screened</dt><dd data-count="stat-screened">0</dd></div>
+        <div><dt>Left out as evidence</dt><dd data-count="stat-rejected">0</dd></div>
+      </dl>
     </div>
-    <div id="gallery" class="gallery"></div>
-  </section>
 
-  <section id="report" hidden>
-    <button id="back" type="button" class="back">← All checks</button>
+    <aside class="console reveal" id="console" hidden aria-label="Example check">
+      <div class="console-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span id="c-title" class="mono">check</span>
+        <span class="console-tag">replay</span>
+      </div>
+      <div class="console-body">
+        <div class="c-product">
+          <img id="c-img" alt="">
+          <div>
+            <p id="c-name" class="c-name"></p>
+            <p class="c-price"><b id="c-price"></b> <span id="c-mrp" class="strike"></span> <span id="c-off" class="off"></span></p>
+          </div>
+        </div>
+        <ol id="c-lines" class="log"></ol>
+        <div id="c-result" class="c-result">
+          <div class="ring-box"><svg class="ring" viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/><circle class="val claim" id="c-ring1" cx="50" cy="50" r="42"/></svg><div class="ring-txt"><b id="c-r1">0%</b><span>claimed off</span></div></div>
+          <div class="vs">vs</div>
+          <div class="ring-box"><svg class="ring" viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/><circle class="val real" id="c-ring2" cx="50" cy="50" r="42"/></svg><div class="ring-txt"><b id="c-r2">0%</b><span>real saving</span></div></div>
+        </div>
+        <button id="c-open" type="button" class="btn-ghost">Open the full report →</button>
+      </div>
+    </aside>
+  </div>
+</section>
 
-    <article id="verdict" class="verdict">
-      <div class="v-product">
-        <img id="v-thumb" alt="" hidden>
-        <div>
-          <p id="v-brand" class="v-brand"></p>
-          <h2 id="v-title" class="v-title"></h2>
-          <p class="v-amazon">
-            <span>On Amazon.in</span>
-            <b id="v-price"></b>
-            <span id="v-mrp" class="strike"></span>
-            <a id="v-link" target="_blank" rel="noopener">Open listing ↗</a>
-          </p>
+<main class="wrap">
+  <section id="report" class="report" hidden>
+    <div class="report-bar">
+      <button id="back" type="button" class="btn-ghost sm">← All checks</button>
+      <button id="copy" type="button" class="btn-ghost sm">Copy report link</button>
+    </div>
+
+    <article id="verdict" class="panel verdict">
+      <div class="v-glow" aria-hidden="true"></div>
+      <div class="v-grid">
+        <div class="v-left">
+          <div class="v-product">
+            <img id="v-thumb" alt="" hidden>
+            <div>
+              <p id="v-brand" class="eyebrow"></p>
+              <h2 id="v-title" class="v-title"></h2>
+              <p class="v-amazon"><span class="muted">Amazon.in</span> <b id="v-price"></b> <span id="v-mrp" class="strike"></span> <a id="v-link" target="_blank" rel="noopener">Open listing ↗</a></p>
+            </div>
+          </div>
+          <span id="v-label" class="label"></span>
+          <p id="v-headline" class="headline"></p>
+          <ul id="v-notes" class="notes"></ul>
+        </div>
+        <div class="v-right">
+          <div class="gauges">
+            <div class="ring-box big"><svg class="ring" viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/><circle class="val claim" id="g1" cx="50" cy="50" r="42"/></svg><div class="ring-txt"><b id="g1-t">-</b><span>Amazon's "% off"</span></div></div>
+            <div class="ring-box big"><svg class="ring" viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/><circle class="val real" id="g2" cx="50" cy="50" r="42"/></svg><div class="ring-txt"><b id="g2-t">-</b><span id="g2-cap">vs other stores</span></div></div>
+          </div>
+          <div class="street">
+            <span class="muted">Street price</span>
+            <b id="s-street">-</b>
+            <span id="s-street-sub" class="muted small"></span>
+          </div>
         </div>
       </div>
-
-      <div class="v-call">
-        <span id="v-label" class="label"></span>
-        <p id="v-headline" class="headline"></p>
-      </div>
-
-      <div class="score">
-        <div class="tile">
-          <span class="tile-cap">Amazon's claim</span>
-          <span class="tile-num" id="s-claimed"></span>
-          <span class="tile-sub" id="s-claimed-sub"></span>
-        </div>
-        <div class="tile tile-real">
-          <span class="tile-cap" id="s-real-cap">Against other stores</span>
-          <span class="tile-num" id="s-real"></span>
-          <span class="tile-sub" id="s-real-sub"></span>
-        </div>
-        <div class="tile">
-          <span class="tile-cap">Street price</span>
-          <span class="tile-num" id="s-street"></span>
-          <span class="tile-sub" id="s-street-sub"></span>
-        </div>
-      </div>
-      <ul id="v-notes" class="notes"></ul>
     </article>
 
-    <article class="card">
-      <div class="card-head">
+    <article class="panel">
+      <div class="panel-head">
         <h3>What each store charges</h3>
         <div class="legend">
           <span><i class="lg lg-amazon"></i>Amazon.in (the claim)</span>
@@ -134,52 +123,72 @@
       </div>
       <div id="chart" class="chart"></div>
       <div id="tip" class="tip" hidden></div>
-      <details class="table-view">
+      <details class="more">
         <summary>Table view</summary>
-        <div class="table-wrap">
-          <table class="sellers">
-            <thead><tr><th>Seller</th><th class="num">Price</th><th>Stock</th><th>Listing</th></tr></thead>
-            <tbody id="seller-rows"></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Seller</th><th class="num">Price</th><th>Stock</th><th>Listing</th></tr></thead><tbody id="seller-rows"></tbody></table></div>
       </details>
     </article>
 
-    <div class="two">
-      <article class="card">
-        <h3>How we checked</h3>
+    <div class="cols">
+      <article class="panel">
+        <div class="panel-head"><h3>How we checked</h3><span class="muted small">each SerpApi call and what it returned</span></div>
         <ol id="trail" class="trail"></ol>
       </article>
-      <article class="card">
-        <h3>What we left out, and why</h3>
-        <p class="muted small">A wrong comparison is worse than none. These listings didn't count as evidence.</p>
+      <article class="panel">
+        <div class="panel-head"><h3>Evidence funnel</h3><span class="muted small">a wrong comparison is worse than none</span></div>
+        <div id="funnel" class="funnel"></div>
         <div id="reasons" class="reasons"></div>
-        <details id="rejected-box" class="table-view">
+        <details id="rejected-box" class="more">
           <summary id="rejected-sum"></summary>
-          <div class="table-wrap">
-            <table class="sellers">
-              <thead><tr><th>Seller</th><th class="num">Price</th><th>Reason</th><th>Listing</th></tr></thead>
-              <tbody id="rejected-rows"></tbody>
-            </table>
-          </div>
+          <div class="table-wrap"><table class="tbl"><thead><tr><th>Seller</th><th class="num">Price</th><th>Reason</th><th>Listing</th></tr></thead><tbody id="rejected-rows"></tbody></table></div>
         </details>
       </article>
     </div>
   </section>
 
-  <section class="how">
-    <div class="section-head"><h2>How it works</h2></div>
-    <div class="how-grid">
-      <div class="how-step"><span class="n">1</span><h3>The claim</h3><p><code>amazon_product</code> reads the listing's price and its struck-through M.R.P.</p></div>
-      <div class="how-step"><span class="n">2</span><h3>The market</h3><p><code>google_shopping</code>, <code>google</code> search and <code>google_immersive_product</code> find Indian stores selling it.</p></div>
-      <div class="how-step"><span class="n">3</span><h3>The match</h3><p>Same model, same memory, new, in stock, sold in India, priced within the M.R.P. Accessories, parts, EMI listings and import resellers are dropped.</p></div>
-      <div class="how-step"><span class="n">4</span><h3>The verdict</h3><p>The median of other sellers is the street price. A big "% off" that saves nothing against it is measured from a price nobody charges.</p></div>
+  <section id="results" class="block" hidden>
+    <div class="block-head"><h2>Pick the exact product</h2><p class="muted">Amazon.in shows several listings for that name. Pick the one you mean.</p></div>
+    <ul id="result-list" class="result-list"></ul>
+  </section>
+
+  <section id="checks" class="block">
+    <div class="block-head reveal">
+      <div>
+        <p class="eyebrow">Recorded checks</p>
+        <h2>Checked products</h2>
+        <p class="muted">Real Amazon.in listings checked against Indian stores. Open one to see the evidence.</p>
+      </div>
+      <div id="filters" class="tabs" role="tablist" aria-label="Filter by verdict"></div>
     </div>
+    <div id="gallery" class="gallery"></div>
+  </section>
+
+  <section id="how" class="block">
+    <div class="block-head reveal"><div><p class="eyebrow">Method</p><h2>How it works</h2></div></div>
+    <ol class="pipeline">
+      <li class="reveal"><span class="step">01</span><h3>The claim</h3><p>Reads the Amazon.in listing's price and its struck-through M.R.P.</p><code>amazon_product</code></li>
+      <li class="reveal"><span class="step">02</span><h3>The market</h3><p>Finds Indian stores selling the same model today.</p><code>google_shopping</code> <code>google</code> <code>google_immersive_product</code></li>
+      <li class="reveal"><span class="step">03</span><h3>The match</h3><p>Same model and memory, new, in stock, sold in India, within the M.R.P. Accessories, parts, EMI and import listings are dropped.</p><code>same-model rules</code></li>
+      <li class="reveal"><span class="step">04</span><h3>The verdict</h3><p>The median of other sellers is the street price. A big "% off" that saves nothing against it is measured from a price nobody charges.</p><code>median · thresholds</code></li>
+    </ol>
   </section>
 </main>
 
+<div id="progress" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="p-title">
+  <div class="modal-card">
+    <div class="p-head"><h2 id="p-title">Checking the discount</h2><span id="p-timer" class="mono muted">0.0s</span></div>
+    <ol id="steps" class="steps"></ol>
+    <p class="muted small">A live check makes up to five SerpApi calls and takes about half a minute.</p>
+  </div>
+</div>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
 <footer class="foot">
-  <div class="wrap">AsliDeal · data from <a href="https://serpapi.com" target="_blank" rel="noopener">SerpApi</a> · prices change, so every check is a snapshot of today</div>
+  <div class="wrap foot-in">
+    <span><b>AsliDeal</b> · data from <a href="https://serpapi.com" target="_blank" rel="noopener">SerpApi</a></span>
+    <span class="muted">Prices change, so every check is a snapshot of today.</span>
+  </div>
 </footer>
 <script src="/static/app.js"></script>
 </body>

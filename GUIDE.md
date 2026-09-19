@@ -36,9 +36,9 @@ Every piece of data comes from SerpApi. There is no other source.
 On first run, `run.sh` finds a Python of 3.9 or newer, creates `backend/.venv`, and installs the
 dependencies. It then serves the app with uvicorn.
 
-With no API key it runs in **demo mode** on recorded responses. Click any product in the "Already
-checked" gallery, or "See the evidence" on the example card, to see a full report. Nothing is fetched
-from the network.
+With no API key it runs in **demo mode** on recorded responses. Click any product in the "Checked
+products" gallery, a "Try" chip, or "Open the full report" on the example console, to see a full
+report. Nothing is fetched from the network.
 
 To check any product live:
 
@@ -135,12 +135,16 @@ A live check costs at most five searches.
 6. `check()` also records a **trail**: one entry per SerpApi call with what it returned, and a final
    entry counting the listings kept and left out, grouped by reason.
 7. The page shows the report:
-   - the verdict, with three numbers: Amazon's claimed discount, the real saving against other
-     stores, and the street price,
+   - the verdict, with two ring gauges (Amazon's claimed discount, the real saving against other
+     stores) and the street price,
    - a price chart with one row per seller (with the store's logo), and the M.R.P. and street price
      drawn as reference lines,
    - "How we checked", built from the trail,
-   - "What we left out, and why", with every rejected listing and its reason.
+   - the "Evidence funnel": listings found, kept and left out, with a bar split by rejection reason
+     and every rejected listing in a table.
+
+The home page replays one recorded check in a console card, line by line from its trail, and its
+counters (products checked, listings screened, left out) are summed from `/api/gallery`.
 
 The page address becomes `#check/<ASIN>`, so each report has its own link and the browser's back
 button returns to the gallery.
@@ -156,7 +160,7 @@ button returns to the gallery.
 | `backend/aslideal/pipeline.py` | `parse_asin()`, `amazon_search()`, `amazon_product()`, `offer_problem()`, `check()`, which also builds the trail |
 | `backend/aslideal/verdict.py` | `Offer` (seller, price, stock, title, link, store logo), `Verdict`, `judge()`, `is_own()` for Amazon's own listings, `rupees()` and `pct()` formatting |
 | `backend/aslideal/api.py` | the FastAPI app, `.env` loading, `recorded_listings()`, the four API routes and the page |
-| `backend/aslideal/web/` | the single-page front end: `index.html`, `style.css` (light and dark), `app.js` (gallery, progress steps, report, price chart) |
+| `backend/aslideal/web/` | the single-page front end: `index.html`, `style.css` (one dark theme), `app.js` (console replay, gallery with filters, progress dialog, report, price chart, funnel) |
 | `backend/scripts/evaluate.py` | runs the fixed evaluation set and reports how many reach a verdict |
 
 ---
@@ -166,7 +170,7 @@ button returns to the gallery.
 | method | path | returns |
 |---|---|---|
 | `GET` | `/api/status` | demo or live, searches left, and the products the recorded data can answer |
-| `GET` | `/api/gallery` | a verdict summary for every recorded product. Always replayed from the cache, so loading the home page never spends a search |
+| `GET` | `/api/gallery` | a verdict summary for every recorded product, with `screened` and `left_out` counts. Always replayed from the cache, so loading the home page never spends a search |
 | `GET` | `/api/search?q=` | Amazon.in listings matching a product name |
 | `GET` | `/api/check/{asin}` | the full report for one listing: `listing`, `verdict`, `offers`, `rejected` and `trail` |
 | `GET` | `/` | the page |
@@ -245,7 +249,7 @@ checks, and make sure `DEMO_MODE` is not set to `1`.
 Fewer than two other in-stock sellers passed the matching rules. "What we left out, and why" in the
 report shows each excluded listing and its reason.
 
-### A live check shows the progress steps for a while
+### A live check shows the progress dialog for a while
 A live check makes up to five SerpApi calls and takes about half a minute. The steps on screen are
 paced by a timer, not by the server; the real record of each call is in "How we checked" once the
 report loads.
