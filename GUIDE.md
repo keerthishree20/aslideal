@@ -6,6 +6,7 @@ self-contained: you can paste it into any AI chat and ask questions about the pr
 the repository.
 
 **Repository:** https://github.com/keerthishree20/aslideal
+**All projects:** https://github.com/keerthishree20
 
 ---
 
