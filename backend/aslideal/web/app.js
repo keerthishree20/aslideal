@@ -331,6 +331,7 @@ function renderReport(r) {
     : "needs 2 or more other sellers";
 
   renderChart(v, r.offers);
+  renderPatterns(r.signals);
   renderHistory(r);
   lastReport = r;
   renderTable(r.offers);
@@ -339,6 +340,95 @@ function renderReport(r) {
 }
 
 let lastReport = null;
+
+const PATTERN_NAMES = {
+  inflated_reference: "Inflated reference price",
+  false_urgency: "False urgency",
+  drip_pricing: "Drip pricing",
+  conditional_savings: "Savings only some buyers get",
+};
+
+// Three of the thirteen dark patterns India's CCPA named in 2023 show up in price
+// data. The wording reports what was seen, never what anyone intended.
+function renderPatterns(sig) {
+  const panel = $("patterns");
+  panel.hidden = !sig;
+  if (!sig) return;
+  $("pattern-list").replaceChildren(...Object.entries(sig.checks).map(([key, c]) => {
+    const state = c.flag === true ? ["flag", "flagged"] : c.flag === false ? ["ok", "clear"] : ["na", "no data"];
+    return el("li", {},
+      el("span", { class: "pchip " + state[0] }, state[1]),
+      el("div", {}, el("b", {}, PATTERN_NAMES[key] || key), el("p", {}, c.detail)));
+  }));
+
+  const complaints = sig.complaints || [];
+  $("complaints-panel").hidden = !complaints.length;
+  if (!complaints.length) return;
+  $("complaints").replaceChildren(...complaints.map((c) => {
+    const fill = el("i", { style: "width:0;background:var(--over)" });
+    requestAnimationFrame(() => setTimeout(() => (fill.style.width = Math.round(c.share * 100) + "%"), 150));
+    return el("div", { class: "reason", style: "grid-template-columns:1fr auto" },
+      el("span", {}, `${c.topic}: ${c.negative} of ${c.total.toLocaleString("en-IN")} mentions are negative`),
+      el("b", {}, Math.round(c.share * 100) + "%"),
+      el("div", { class: "bar", style: "grid-column:1/-1" }, fill));
+  }));
+}
+
+// Scanning a search: how many of the advertised deals hold up?
+async function onScan(e) {
+  e.preventDefault();
+  const q = $("scan-q").value.trim();
+  if (!q) return;
+  const btn = $("scan-go");
+  btn.disabled = true; btn.textContent = "Scanning…";
+  $("scan-headline").hidden = true;
+  $("scan-results").hidden = true;
+  try {
+    const r = await api(`/api/scan?q=${encodeURIComponent(q)}&limit=${$("scan-n").value}`);
+    $("scan-headline").textContent = r.headline;
+    $("scan-headline").hidden = false;
+    $("scan-rows").replaceChildren(...r.rows.map((row) => {
+      const kind = KINDS[row.kind] || { label: row.headline || "couldn't check", icon: "?" };
+      return el("tr", {},
+        el("td", {}, el("a", { href: "#check/" + row.asin, title: row.title }, shortName(row.title, row.brand))),
+        el("td", { class: "num" }, rupees(row.price)),
+        el("td", { class: "num" }, row.claimed_discount ? pct(row.claimed_discount) : "-"),
+        el("td", { class: "num" }, row.real_discount == null ? "?" : pct(row.real_discount)),
+        el("td", { class: "kind" }, kind.short || kind.label));
+    }));
+    $("scan-results").hidden = false;
+    $("scan-results").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = "Scan";
+  }
+}
+
+// A photo of a product: Google Lens names it, then we look it up on Amazon.in.
+async function onLens(e) {
+  e.preventDefault();
+  const url = $("lens-url").value.trim();
+  if (!url) return;
+  const btn = e.target.querySelector("button");
+  btn.disabled = true; btn.textContent = "Looking…";
+  try {
+    const r = await api("/api/lens?url=" + encodeURIComponent(url));
+    toast(`Google Lens says: ${r.recognised}`);
+    renderResults(r.results);
+    if (r.seen_at && r.seen_at.length) {
+      const list = el("ul", { class: "sightings" },
+        el("li", { class: "muted" }, "Lens also priced it at:"),
+        ...r.seen_at.map((x) => el("li", {}, el("span", {}, x.source), el("b", {}, rupees(x.price)))));
+      $("result-list").before(list);
+      setTimeout(() => list.remove(), 60000);
+    }
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = "Identify";
+  }
+}
 
 // SerpApi has no price history, so the app keeps its own: one row per live check.
 function renderHistory(r) {
@@ -593,6 +683,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); }
 });
 $("form").addEventListener("submit", onSubmit);
+$("scan-form").addEventListener("submit", onScan);
+$("lens-form").addEventListener("submit", onLens);
 $("back").addEventListener("click", () => {
   history.pushState("", "", location.pathname);
   $("report").hidden = true;

@@ -36,6 +36,8 @@ class Offer:
     title: str = ""
     link: str = ""
     logo: str = ""
+    shipping: str = ""     # what the seller says about delivery
+    total: float = 0       # price once delivery is added, when the seller quotes it
 
 
 @dataclass

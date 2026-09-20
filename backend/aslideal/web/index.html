@@ -18,6 +18,7 @@
     <a href="#" class="logo" id="home-link"><span class="mark" aria-hidden="true">₹</span><span>Asli<b>Deal</b></span></a>
     <nav class="links" aria-label="Sections">
       <a href="#checks">Checked products</a>
+      <a href="#scan">Shelf scan</a>
       <a href="#how">How it works</a>
     </nav>
     <span id="mode" class="status" hidden></span>
@@ -39,6 +40,14 @@
         <button type="submit" id="go">Check</button>
       </form>
       <div id="try" class="try" hidden><span>Try</span></div>
+      <details class="lens">
+        <summary>or check from a photo</summary>
+        <form id="lens-form" class="lens-form" autocomplete="off">
+          <input id="lens-url" placeholder="Paste the address of a product photo" required>
+          <button type="submit" class="btn-ghost sm">Identify</button>
+        </form>
+        <p class="muted small">Google Lens names the product, then AsliDeal looks it up on Amazon.in. Paste an image address (right-click any product photo → Copy image address).</p>
+      </details>
 
       <dl class="stats">
         <div><dt>Products checked</dt><dd data-count="stat-products">0</dd></div>
@@ -132,6 +141,22 @@
       </details>
     </article>
 
+    <article id="patterns" class="panel" hidden>
+      <div class="panel-head">
+        <h3>Dark-pattern check</h3>
+        <span class="muted small">three of the patterns India's CCPA named in 2023 leave traces in price data</span>
+      </div>
+      <ul id="pattern-list" class="patterns"></ul>
+    </article>
+
+    <article id="complaints-panel" class="panel" hidden>
+      <div class="panel-head">
+        <h3>What buyers keep raising</h3>
+        <span class="muted small">a cheap price can be cheap for a reason</span>
+      </div>
+      <div id="complaints" class="reasons"></div>
+    </article>
+
     <article id="history-panel" class="panel" hidden>
       <div class="panel-head">
         <h3>What this product did over time</h3>
@@ -173,6 +198,30 @@
       <div id="filters" class="tabs" role="tablist" aria-label="Filter by verdict"></div>
     </div>
     <div id="gallery" class="gallery"></div>
+  </section>
+
+  <section id="scan" class="block">
+    <div class="block-head reveal">
+      <div>
+        <p class="eyebrow">Shelf scan</p>
+        <h2>Check a whole shelf at once</h2>
+        <p class="muted">One product tells you about one product. Scanning the advertised deals for a search says how many of them are measured from a price nobody charges.</p>
+      </div>
+    </div>
+    <form id="scan-form" class="cmd scan-form" autocomplete="off">
+      <input id="scan-q" placeholder="A category or search, e.g. wireless earbuds under 2000" required>
+      <select id="scan-n" aria-label="How many listings to check">
+        <option value="3">3 listings</option>
+        <option value="5" selected>5 listings</option>
+        <option value="8">8 listings</option>
+      </select>
+      <button type="submit" id="scan-go">Scan</button>
+    </form>
+    <p class="muted small scan-note">A live scan costs up to five SerpApi searches per listing. Recorded scans cost nothing.</p>
+    <p id="scan-headline" class="scan-headline" hidden></p>
+    <div id="scan-results" class="table-wrap" hidden>
+      <table class="tbl"><thead><tr><th>Listing</th><th class="num">Price</th><th class="num">Claimed</th><th class="num">Real</th><th>Verdict</th></tr></thead><tbody id="scan-rows"></tbody></table>
+    </div>
   </section>
 
   <section id="how" class="block">

@@ -9,8 +9,8 @@ from urllib.parse import urlparse
 from collections import Counter
 from dataclasses import asdict
 
-from . import history, match
-from .serp import DemoMiss, Serp
+from . import history, match, signals
+from .serp import DemoMiss, Serp, SerpError
 from .verdict import MIN_SELLERS, Offer, is_own, judge
 
 # Each product page is one search; stop after this many even if sellers are thin.
@@ -62,21 +62,27 @@ def amazon_search(serp: Serp, query: str) -> list:
 
 
 def amazon_product(serp: Serp, asin: str):
-    """The claim: one exact Amazon.in listing's price and M.R.P."""
+    """The claim: one exact Amazon.in listing, its price, M.R.P. and fine print.
+
+    Returns the listing and the raw response, which also carries review insights.
+    """
     data = serp.search(engine="amazon_product", asin=asin, amazon_domain="amazon.in")
     pr = data.get("product_results")
     if not pr or not pr.get("extracted_price"):
-        return None
+        return None, data
     listing = _listing(pr)
     # The page's brand field reads 'Visit the boAt Store'; the spec table has the plain name.
     listing["brand"] = ((data.get("item_specifications") or {}).get("brand")
                         or (data.get("product_details") or {}).get("brand_name")
                         or re.sub(r"^Visit the (.*) Store$", r"\1", listing["brand"]))
     listing["in_stock"] = "in stock" in (pr.get("stock") or "").lower()
+    # The fine print the dark-pattern checks read.
+    for field in ("badges", "bank_offers", "promotions", "coupons", "delivery"):
+        listing[field] = pr.get(field) or []
     details = data.get("product_details") or {}
     specs = data.get("item_specifications") or {}
     listing["model"] = match.model_token(details.get("model_number") or specs.get("model_number") or "")
-    return listing
+    return listing, data
 
 
 def offer_problem(o: Offer, mrp=None, price=None):
@@ -105,7 +111,7 @@ def _in_stock(store: dict) -> bool:
 
 
 def check(serp: Serp, asin: str) -> dict:
-    listing = amazon_product(serp, asin)
+    listing, amazon_raw = amazon_product(serp, asin)
     if listing is None:
         return {"error": f"Amazon.in has no price for {asin}. The listing may be unavailable."}
     if not listing["brand"]:
@@ -174,9 +180,11 @@ def check(serp: Serp, asin: str) -> dict:
                     "thumbnail": (pr.get("thumbnails") or [best.get("thumbnail")])[0],
                 }
             for st in pr.get("stores", []):
-                add(Offer(seller=st.get("name", "?"), price=st.get("extracted_total") or st.get("extracted_price") or 0,
+                sticker = st.get("extracted_price") or st.get("extracted_total") or 0
+                add(Offer(seller=st.get("name", "?"), price=sticker,
                           in_stock=_in_stock(st), title=st.get("title") or pr.get("title") or best["title"],
-                          link=st.get("link", ""), logo=st.get("logo", "")))
+                          link=st.get("link", ""), logo=st.get("logo", ""),
+                          shipping=st.get("shipping", ""), total=st.get("extracted_total") or sticker))
             trail.append({"engine": "google_immersive_product", "query": best["title"][:80],
                           "found": plural(len(pr.get("stores", [])), "store") + " selling it"})
             if enough():
@@ -237,6 +245,8 @@ def check(serp: Serp, asin: str) -> dict:
                            f"{plural(len(result['rejected']), 'listing')} left out",
                   "reasons": dict(reasons.most_common())})
     result["verdict"] = asdict(judge(listing["price"], listing["mrp"], final))
+    result["signals"] = signals.report(listing, result["verdict"], result["offers"],
+                                       amazon_raw.get("reviews_information"))
     # Only live checks are worth recording; a replay would just repeat what's there.
     if not serp.demo:
         result["history"] = history.record(listing, result["verdict"])
@@ -245,6 +255,42 @@ def check(serp: Serp, asin: str) -> dict:
     if not final:
         result["verdict"]["headline"] = "Couldn't find this exact product sold anywhere else, so there's nothing to compare against."
     return result
+
+
+def scan(serp: Serp, query: str, limit: int = 5) -> dict:
+    """Check a whole shelf: the advertised deals Amazon.in shows for one search.
+
+    Answers the question a single product can't: of the discounts on offer right
+    now, how many are measured from a price no other seller charges?
+    """
+    listings = [i for i in amazon_search(serp, query) if i["mrp"] and not i["sponsored"]]
+    rows, counts = [], Counter()
+    for item in listings[:limit]:
+        try:
+            r = check(serp, item["asin"])
+        except (DemoMiss, SerpError) as e:
+            counts["couldn't check"] += 1
+            rows.append({**item, "kind": "error", "headline": str(e)})
+            continue
+        if "error" in r:
+            counts["couldn't check"] += 1
+            rows.append({**item, "kind": "error", "headline": r["error"]})
+            continue
+        v = r["verdict"]
+        counts[v["kind"]] += 1
+        rows.append({**item, "kind": v["kind"], "headline": v["headline"], "street_price": v["street_price"],
+                     "real_discount": v["real_discount"], "sellers": v["sellers_used"],
+                     "flagged": r["signals"]["flagged"]})
+    judged = sum(n for k, n in counts.items() if k not in ("unverified", "error", "couldn't check"))
+    gap = counts.get("reference_gap", 0)
+    return {
+        "query": query,
+        "rows": rows,
+        "counts": dict(counts),
+        "headline": (f"{gap} of the {plural(judged, 'advertised deal')} we could judge "
+                     f"{'is' if gap == 1 else 'are'} measured from a price no other seller charges." if judged else
+                     "None of these listings had enough other sellers to judge."),
+    }
 
 
 def plural(n: int, word: str) -> str:

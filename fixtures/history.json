@@ -154,5 +154,41 @@
    "sellers": 0,
    "kind": "unverified"
   }
+ ],
+ "B0FBR6HGXM": [
+  {
+   "date": "2026-09-20",
+   "price": 1719,
+   "mrp": 2499,
+   "claimed_discount": 0.312124849939976,
+   "street_price": 1624.0,
+   "real_discount": -0.05849753694581272,
+   "sellers": 2,
+   "kind": "above_market"
+  }
+ ],
+ "B0FHKHT717": [
+  {
+   "date": "2026-09-20",
+   "price": 999,
+   "mrp": 1999,
+   "claimed_discount": 0.5002501250625313,
+   "street_price": 1259.0,
+   "real_discount": 0.2065131056393964,
+   "sellers": 3,
+   "kind": "real_deal"
+  }
+ ],
+ "B0GZN7C6X8": [
+  {
+   "date": "2026-09-20",
+   "price": 1799,
+   "mrp": 4999,
+   "claimed_discount": 0.6401280256051209,
+   "street_price": null,
+   "real_discount": null,
+   "sellers": 0,
+   "kind": "unverified"
+  }
  ]
 }

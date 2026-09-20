@@ -43,6 +43,37 @@ Load it in Chrome: `chrome://extensions` → Developer mode → **Load unpacked*
 
 **It needs the app running locally.** The panel asks `http://localhost:8000` for the verdict, so start `./run.sh` first; without it the panel says so. The extension is a thin client: all the checking happens in the same backend, and the demo data works here too, so recorded products answer with no API key.
 
+## The dark-pattern check
+
+India's CCPA named thirteen dark patterns in its 2023 guidelines, and three of them leave traces in price data. Every report scores the listing against them, saying only what the prices show:
+
+![The dark-pattern check on a report](docs/dark-patterns.png)
+
+| Check | Flagged when |
+|---|---|
+| Inflated reference price | The "% off" is measured from an M.R.P. no in-stock seller charges |
+| False urgency | A "Limited time deal" label that never says when it ends |
+| Drip pricing | The cheapest sticker price isn't cheapest once delivery is added |
+| Savings only some buyers get | The headline saving needs a particular card or coupon |
+
+## Cheap for a reason?
+
+Amazon's own review insights sit next to the price, so a genuine discount on an unreliable product doesn't read as a win:
+
+![What buyers keep raising](docs/complaints.png)
+
+## Scan a whole shelf
+
+One product tells you about one product. A shelf scan checks the advertised deals for a search and says how many hold up:
+
+![A shelf scan of wireless earbuds](docs/shelf-scan.png)
+
+A live scan of "wireless earbuds under 2000" found one listing advertising **31% off that is actually 6% dearer** than other stores, and one genuine 21% saving. It costs up to five searches per listing.
+
+## Check from a photo
+
+Paste the address of a product photo and SerpApi's `google_lens` engine names the product, then AsliDeal looks it up on Amazon.in. Lens usually quotes seller prices with its matches, which the page shows as a first sighting of the market.
+
 ## Price history, kept by the app itself
 
 SerpApi has no price history, so AsliDeal keeps its own: every live check records what it saw that day (Amazon's price, the M.R.P., the street price, the verdict) in `fixtures/history.json`, one reading per product per day. Check the same product next week and the report says what moved — including a change in the M.R.P. itself, which is the interesting one.
@@ -57,7 +88,7 @@ Replays from the cache are never recorded, so the demo data stays as it was.
 
 ## How SerpApi is used
 
-Every verdict comes from five SerpApi engines. There's no other data source.
+Every verdict comes from six SerpApi engines. There's no other data source.
 
 | Engine | What it provides |
 |---|---|
@@ -65,7 +96,8 @@ Every verdict comes from five SerpApi engines. There's no other data source.
 | `amazon` | Product-name search on amazon.in, so the user can pick the exact listing |
 | `google_shopping` (`gl=in`) | Indian sellers' listings and prices for the model |
 | `google` web search (`gl=in`) | More sellers from the popular-products block, plus retailer pages (Flipkart, Vijay Sales, the brand's own store) whose snippet carries a price and stock status |
-| `google_immersive_product` | Every store behind a grouped Google product, with price and stock |
+| `google_immersive_product` | Every store behind a grouped Google product, with price, delivery and stock |
+| `google_lens` | Names a product from a photo, with the sellers and prices Lens saw |
 
 A live check costs at most five searches. Every response is cached on disk, so repeating a check is free. The cache also serves as the demo data.
 

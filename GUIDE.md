@@ -416,6 +416,8 @@ search.
 | Method | Path | Returns |
 |---|---|---|
 | GET | `/api/status` | demo or live, searches left, recorded products |
+| GET | `/api/scan?q=&limit=` | checks several advertised deals for one search and aggregates them; up to five searches per listing, capped at ten listings |
+| GET | `/api/lens?url=` | `google_lens` names the product in a photo, then returns Amazon.in matches and the prices Lens saw |
 | GET | `/api/history/{asin}` | every reading a live check recorded for one product, and what moved since the first |
 | GET | `/api/gallery` | a verdict summary per recorded product, with `screened` and `left_out` counts; **always from the cache**, so the home page never spends a search |
 | GET | `/api/search?q=` | Amazon.in listings for a name |
@@ -602,13 +604,18 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 | 11 | Console replay, counters, gallery filters | Frontend | `app.js`, `index.html` |
 | 12 | Report: gauges, price chart, trail, evidence funnel | Frontend | `app.js`, `style.css` |
 | 13 | `#check/ASIN` links | Frontend | `app.js` |
-| 14 | 32 tests + two frozen evaluation sets | Testing | `tests/`, `scripts/evaluate.py` |
+| 14 | 38 tests + two frozen evaluation sets | Testing | `tests/`, `scripts/evaluate.py` |
 | 15 | One-command start | Tooling | `run.sh` |
 | 16 | Chrome extension: verdict on the Amazon.in page | Frontend | `extension/` |
 | 17 | Shorter fallback search + manufacturer model codes | Core | `match.py`, `pipeline.py` |
 | 18 | Size normalisation and jar/pack count rule | Core | `match.py` |
 | 19 | Price history from live checks | Backend | `history.py` |
 | 20 | Shareable 1200x630 result card | Frontend | `app.js` |
+| 21 | Dark-pattern check (CCPA-shaped signals) | Core | `signals.py` |
+| 22 | Buyer-complaint insights from Amazon reviews | Core | `signals.py` |
+| 23 | Delivery-inclusive totals and conditional savings | Core | `signals.py`, `pipeline.py` |
+| 24 | Shelf scan of a whole search | Backend | `pipeline.py`, `api.py` |
+| 25 | Check from a photo (`google_lens`) | Backend | `api.py` |
 
 ### Data Flow Architecture
 

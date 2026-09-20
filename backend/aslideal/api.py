@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import history
+from . import pipeline
 from .pipeline import amazon_search, check, parse_asin
 from .serp import ROOT, DemoMiss, Serp, SerpError
 
@@ -90,6 +91,33 @@ def product_history(asin: str):
     """Every live check ever run on this product, and what moved since the first one."""
     days = history.load().get(parse_asin(asin) or asin.upper(), [])
     return {"days": days, "changes": history.changes(days)}
+
+
+@app.get("/api/scan")
+def scan_shelf(q: str, limit: int = 5):
+    """Check several advertised deals at once. Costs up to five searches per product."""
+    limit = max(1, min(limit, 10))
+    return _answer(pipeline.scan, q, limit)
+
+
+@app.get("/api/lens")
+def lens(url: str):
+    """Identify a product from a photo, then look it up on Amazon.in."""
+    try:
+        data = serp.search(engine="google_lens", url=url, country="in", hl="en")
+    except DemoMiss as e:
+        raise HTTPException(404, str(e))
+    except SerpError as e:
+        raise HTTPException(502, f"SerpApi: {e}")
+    matches = [m for m in (data.get("visual_matches") or []) if m.get("title")]
+    if not matches:
+        raise HTTPException(422, "Google Lens didn't recognise a product in that image.")
+    best = matches[0]["title"]
+    # Lens often quotes a price with the match, which is a free look at the market.
+    sightings = [{"source": m.get("source", "?"), "title": m["title"],
+                  "price": (m.get("price") or {}).get("extracted_value")}
+                 for m in matches if (m.get("price") or {}).get("extracted_value")][:6]
+    return {"recognised": best, "seen_at": sightings, "results": _answer(amazon_search, best)}
 
 
 @app.get("/api/search")
