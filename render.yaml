@@ -1,0 +1,15 @@
+# One-click deploy on Render: New → Blueprint → pick this repo.
+# It runs in demo mode on the recorded responses, so no API key is needed and
+# none is exposed. To let a hosted copy run live checks, add SERPAPI_KEY in the
+# Render dashboard and set DEMO_MODE to 0 — but then every visitor spends your
+# monthly searches.
+services:
+  - type: web
+    name: aslideal
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/status
+    envVars:
+      - key: DEMO_MODE
+        value: "1"

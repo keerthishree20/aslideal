@@ -33,6 +33,16 @@ Paste an amazon.in product link, or type a product name and pick the exact listi
 
 Needs Python 3.9 or newer. Tests, after `./run.sh` has run once to create the environment: `cd backend && .venv/bin/python -m pytest`.
 
+## Host it so others can click it
+
+```bash
+docker build -t aslideal . && docker run -p 8000:8000 aslideal
+```
+
+The image runs in **demo mode**: recorded responses only, no API key inside it, nothing to leak. `render.yaml` is a Render blueprint for the same thing — New → Blueprint → pick this repo — so a hosted copy costs nothing to run and needs no key.
+
+A hosted copy *can* run live checks by setting `SERPAPI_KEY` and `DEMO_MODE=0` in the host's dashboard, but then every visitor spends your monthly searches, so the default stays demo.
+
 ## The Chrome extension
 
 `extension/` puts the verdict on the Amazon.in product page itself, so you never have to leave it.
@@ -41,7 +51,7 @@ Needs Python 3.9 or newer. Tests, after `./run.sh` has run once to create the en
 
 Load it in Chrome: `chrome://extensions` → Developer mode → **Load unpacked** → pick the `extension/` folder. Then open any amazon.in product page.
 
-**It needs the app running locally.** The panel asks `http://localhost:8000` for the verdict, so start `./run.sh` first; without it the panel says so. The extension is a thin client: all the checking happens in the same backend, and the demo data works here too, so recorded products answer with no API key.
+**It talks to `http://localhost:8000`,** which is the `SERVER` constant at the top of `extension/background.js`; point it at a hosted copy by changing that line and the matching entry in `manifest.json`'s `host_permissions`. **It needs the app running.** The panel asks `http://localhost:8000` for the verdict, so start `./run.sh` first; without it the panel says so. The extension is a thin client: all the checking happens in the same backend, and the demo data works here too, so recorded products answer with no API key.
 
 ## The dark-pattern check
 
