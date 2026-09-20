@@ -416,6 +416,7 @@ search.
 | Method | Path | Returns |
 |---|---|---|
 | GET | `/api/status` | demo or live, searches left, recorded products |
+| GET | `/api/history/{asin}` | every reading a live check recorded for one product, and what moved since the first |
 | GET | `/api/gallery` | a verdict summary per recorded product, with `screened` and `left_out` counts; **always from the cache**, so the home page never spends a search |
 | GET | `/api/search?q=` | Amazon.in listings for a name |
 | GET | `/api/check/{asin}` | `listing`, `verdict`, `offers`, `rejected`, `trail`, `matched_product` |
@@ -556,8 +557,10 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 
 ## 19. Limitations & Wording Rules
 
-- **A snapshot, not a history.** SerpApi has no price history, so it can't tell whether a price was
-  raised before a sale.
+- **A snapshot, unless you keep your own.** SerpApi has no price history, so a single check can't tell
+  whether a price was raised before a sale. Every live check is recorded in `fixtures/history.json`
+  (one reading per product per day), and the report compares a product with its own past readings —
+  but that only helps once a product has been checked more than once.
 - **Only in-stock sellers Google indexes count.**
 - **Matching is strict on purpose.** Phones are hardest (memory variant must be stated).
 - **Wording:** the tool reports what prices show and **never** calls a retailer's discount "fake" or
@@ -599,8 +602,13 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 | 11 | Console replay, counters, gallery filters | Frontend | `app.js`, `index.html` |
 | 12 | Report: gauges, price chart, trail, evidence funnel | Frontend | `app.js`, `style.css` |
 | 13 | `#check/ASIN` links | Frontend | `app.js` |
-| 14 | 29 tests + frozen evaluation set | Testing | `tests/`, `scripts/evaluate.py` |
+| 14 | 32 tests + two frozen evaluation sets | Testing | `tests/`, `scripts/evaluate.py` |
 | 15 | One-command start | Tooling | `run.sh` |
+| 16 | Chrome extension: verdict on the Amazon.in page | Frontend | `extension/` |
+| 17 | Shorter fallback search + manufacturer model codes | Core | `match.py`, `pipeline.py` |
+| 18 | Size normalisation and jar/pack count rule | Core | `match.py` |
+| 19 | Price history from live checks | Backend | `history.py` |
+| 20 | Shareable 1200x630 result card | Frontend | `app.js` |
 
 ### Data Flow Architecture
 
