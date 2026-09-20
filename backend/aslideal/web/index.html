@@ -77,7 +77,10 @@
   <section id="report" class="report" hidden>
     <div class="report-bar">
       <button id="back" type="button" class="btn-ghost sm">← All checks</button>
-      <button id="copy" type="button" class="btn-ghost sm">Copy report link</button>
+      <span class="bar-right">
+        <button id="save" type="button" class="btn-ghost sm">Save image</button>
+        <button id="copy" type="button" class="btn-ghost sm">Copy report link</button>
+      </span>
     </div>
 
     <article id="verdict" class="panel verdict">
@@ -127,6 +130,15 @@
         <summary>Table view</summary>
         <div class="table-wrap"><table class="tbl"><thead><tr><th>Seller</th><th class="num">Price</th><th>Stock</th><th>Listing</th></tr></thead><tbody id="seller-rows"></tbody></table></div>
       </details>
+    </article>
+
+    <article id="history-panel" class="panel" hidden>
+      <div class="panel-head">
+        <h3>What this product did over time</h3>
+        <span class="muted small">SerpApi has no price history, so AsliDeal keeps its own: one reading per live check</span>
+      </div>
+      <p id="history-note" class="muted"></p>
+      <div class="table-wrap"><table class="tbl"><thead><tr><th>Date</th><th class="num">Amazon.in</th><th class="num">M.R.P.</th><th class="num">Other stores</th><th class="num">"% off"</th><th>Verdict</th></tr></thead><tbody id="history-rows"></tbody></table></div>
     </article>
 
     <div class="cols">

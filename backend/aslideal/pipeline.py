@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from collections import Counter
 from dataclasses import asdict
 
-from . import match
+from . import history, match
 from .serp import DemoMiss, Serp
 from .verdict import MIN_SELLERS, Offer, is_own, judge
 
@@ -237,6 +237,11 @@ def check(serp: Serp, asin: str) -> dict:
                            f"{plural(len(result['rejected']), 'listing')} left out",
                   "reasons": dict(reasons.most_common())})
     result["verdict"] = asdict(judge(listing["price"], listing["mrp"], final))
+    # Only live checks are worth recording; a replay would just repeat what's there.
+    if not serp.demo:
+        result["history"] = history.record(listing, result["verdict"])
+    else:
+        result["history"] = history.load().get(asin, [])
     if not final:
         result["verdict"]["headline"] = "Couldn't find this exact product sold anywhere else, so there's nothing to compare against."
     return result

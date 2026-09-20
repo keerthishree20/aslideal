@@ -199,7 +199,8 @@ kbd { font: 12px var(--mono); color: var(--muted); border: 1px solid var(--edge-
 
 /* ---------- report ---------- */
 .report { padding-top: 32px; }
-.report-bar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.report-bar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.bar-right { display: flex; gap: 8px; flex-wrap: wrap; }
 .panel { position: relative; margin-top: 18px; padding: 26px; border-radius: var(--radius); background: var(--glass); border: 1px solid var(--edge); }
 .panel h3 { font-size: 19px; }
 .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px 24px; flex-wrap: wrap; margin-bottom: 10px; }

@@ -43,6 +43,18 @@ Load it in Chrome: `chrome://extensions` → Developer mode → **Load unpacked*
 
 **It needs the app running locally.** The panel asks `http://localhost:8000` for the verdict, so start `./run.sh` first; without it the panel says so. The extension is a thin client: all the checking happens in the same backend, and the demo data works here too, so recorded products answer with no API key.
 
+## Price history, kept by the app itself
+
+SerpApi has no price history, so AsliDeal keeps its own: every live check records what it saw that day (Amazon's price, the M.R.P., the street price, the verdict) in `fixtures/history.json`, one reading per product per day. Check the same product next week and the report says what moved — including a change in the M.R.P. itself, which is the interesting one.
+
+Replays from the cache are never recorded, so the demo data stays as it was.
+
+## A card you can share
+
+**Save image** on any report draws a 1200×630 PNG of the verdict:
+
+![A shareable AsliDeal result card](docs/share-card.png)
+
 ## How SerpApi is used
 
 Every verdict comes from five SerpApi engines. There's no other data source.

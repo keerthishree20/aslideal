@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from . import history
 from .pipeline import amazon_search, check, parse_asin
 from .serp import ROOT, DemoMiss, Serp, SerpError
 
@@ -82,6 +83,13 @@ def gallery():
     order = ["reference_gap", "above_market", "real_deal", "going_rate", "unverified"]
     cards.sort(key=lambda c: order.index(c["kind"]))
     return cards
+
+
+@app.get("/api/history/{asin}")
+def product_history(asin: str):
+    """Every live check ever run on this product, and what moved since the first one."""
+    days = history.load().get(parse_asin(asin) or asin.upper(), [])
+    return {"days": days, "changes": history.changes(days)}
 
 
 @app.get("/api/search")

@@ -331,9 +331,110 @@ function renderReport(r) {
     : "needs 2 or more other sellers";
 
   renderChart(v, r.offers);
+  renderHistory(r);
+  lastReport = r;
   renderTable(r.offers);
   renderTrail(r.trail || []);
   renderFunnel(r);
+}
+
+let lastReport = null;
+
+// SerpApi has no price history, so the app keeps its own: one row per live check.
+function renderHistory(r) {
+  const days = r.history || [];
+  const panel = $("history-panel");
+  panel.hidden = !days.length;
+  if (!days.length) return;
+  const first = days[0], last = days[days.length - 1];
+  const moved = (a, b) => (a == null || b == null ? null : Math.round(b - a));
+  const bits = [];
+  if (days.length === 1) {
+    bits.push(`First reading today. Check this product again another day and the movement shows up here.`);
+  } else {
+    const p = moved(first.price, last.price), st = moved(first.street_price, last.street_price);
+    bits.push(`${days.length} readings since ${first.date}.`);
+    bits.push(p ? `Amazon's price ${p > 0 ? "rose" : "fell"} by ${rupees(Math.abs(p))}.` : "Amazon's price hasn't moved.");
+    if (st) bits.push(`Other stores ${st > 0 ? "rose" : "fell"} by ${rupees(Math.abs(st))}.`);
+    if (moved(first.mrp, last.mrp)) bits.push(`The M.R.P. itself changed — worth a closer look.`);
+  }
+  $("history-note").textContent = bits.join(" ");
+  $("history-rows").replaceChildren(...days.slice().reverse().map((d) =>
+    el("tr", {},
+      el("td", {}, d.date),
+      el("td", { class: "num" }, rupees(d.price)),
+      el("td", { class: "num" }, d.mrp ? rupees(d.mrp) : "-"),
+      el("td", { class: "num" }, d.street_price ? rupees(d.street_price) : "-"),
+      el("td", { class: "num" }, d.claimed_discount ? pct(d.claimed_discount) : "-"),
+      el("td", {}, (KINDS[d.kind] || KINDS.unverified).short || (KINDS[d.kind] || KINDS.unverified).label))));
+}
+
+// A 1200x630 card of the verdict, drawn on a canvas so it can be saved and shared.
+function saveCard() {
+  if (!lastReport) return;
+  const { listing: L, verdict: v } = lastReport;
+  const c = el("canvas", { width: "1200", height: "630" });
+  const g = c.getContext("2d");
+  g.fillStyle = "#0b0c11"; g.fillRect(0, 0, 1200, 630);
+  const glow = g.createRadialGradient(980, 120, 40, 980, 120, 520);
+  glow.addColorStop(0, "rgba(255,122,46,.35)"); glow.addColorStop(1, "rgba(255,122,46,0)");
+  g.fillStyle = glow; g.fillRect(0, 0, 1200, 630);
+
+  g.fillStyle = "#ff7a2e"; g.font = "700 30px Space Grotesk, sans-serif";
+  g.fillText("AsliDeal", 64, 86);
+  g.fillStyle = "#8a8fa0"; g.font = "400 20px Inter, sans-serif";
+  g.fillText("Is that \u201c% off\u201d actually asli?", 190, 86);
+
+  const kind = KINDS[v.kind] || KINDS.unverified;
+  const colour = { reference_gap: "#fbbf24", real_deal: "#34d399", going_rate: "#60a5fa", above_market: "#f87171", unverified: "#a1a7b6" }[v.kind];
+  g.fillStyle = colour; g.font = "700 22px Inter, sans-serif";
+  g.fillText(kind.label.toUpperCase(), 64, 150);
+
+  g.fillStyle = "#eceef4"; g.font = "600 40px Space Grotesk, sans-serif";
+  wrapText(g, shortName(L.title, L.brand), 64, 215, 1070, 50, 2);
+
+  g.font = "700 108px Space Grotesk, sans-serif"; g.fillStyle = "#ff9b5c";
+  g.fillText(v.claimed_discount ? pct(v.claimed_discount) : "-", 64, 400);
+  g.font = "400 20px Inter, sans-serif"; g.fillStyle = "#8a8fa0";
+  g.fillText("Amazon's \u201c% off\u201d", 68, 435);
+
+  g.font = "400 40px Inter, sans-serif"; g.fillStyle = "#5b6072";
+  g.fillText("vs", 330, 390);
+
+  const real = v.real_discount;
+  g.font = "700 108px Space Grotesk, sans-serif";
+  g.fillStyle = real == null ? "#a1a7b6" : real < 0 ? "#f87171" : "#34e0a1";
+  g.fillText(real == null ? "?" : real >= 0 ? pct(real) : "+" + pct(-real), 420, 400);
+  g.font = "400 20px Inter, sans-serif"; g.fillStyle = "#8a8fa0";
+  g.fillText(real == null ? "not enough sellers" : "real saving vs other stores", 424, 435);
+
+  g.fillStyle = "#c3c7d3"; g.font = "400 24px Inter, sans-serif";
+  wrapText(g, v.headline, 64, 500, 1070, 34, 2);
+
+  g.fillStyle = "#5b6072"; g.font = "400 18px Inter, sans-serif";
+  g.fillText("github.com/keerthishree20/aslideal  ·  prices checked " + new Date().toLocaleDateString("en-IN"), 64, 590);
+
+  c.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = el("a", { href: url, download: `aslideal-${L.asin}.png` });
+    document.body.append(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast("Image saved.");
+  });
+}
+
+function wrapText(g, text, x, y, maxWidth, lineHeight, maxLines) {
+  const words = String(text).split(/\s+/);
+  let line = "", lines = 0;
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (g.measureText(test).width > maxWidth && line) {
+      lines += 1;
+      if (lines === maxLines) { g.fillText(line.replace(/[.,]$/, "") + "\u2026", x, y); return; }
+      g.fillText(line, x, y); y += lineHeight; line = w;
+    } else line = test;
+  }
+  g.fillText(line, x, y);
 }
 
 function niceTicks(lo, hi, count) {
@@ -497,6 +598,7 @@ $("back").addEventListener("click", () => {
   $("report").hidden = true;
   $("checks").scrollIntoView({ behavior: "smooth" });
 });
+$("save").addEventListener("click", saveCard);
 $("copy").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(location.href); toast("Report link copied."); }
   catch { toast("Couldn't copy. The link is in the address bar.", true); }
