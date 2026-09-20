@@ -85,6 +85,24 @@ def amazon_product(serp: Serp, asin: str):
     return listing, data
 
 
+# Places that quote a price but aren't shops selling this product new.
+NOT_A_SHOP = ("facebook.", "instagram.", "youtube.", "pinterest.", "twitter.", "x.com",
+              "reddit.", "quora.", "olx.", "linkedin.")
+
+
+def seller_from(source: str, link: str, title: str) -> str:
+    """Google Lens sometimes gives the page title where the shop's name belongs.
+    The link's hostname is the honest answer: 'flipkart.com' -> 'Flipkart'."""
+    looks_like_title = not source or len(source) > 34 or source[:20].lower() == (title or "")[:20].lower()
+    if not looks_like_title:
+        return source
+    host = (urlparse(link).hostname or "").replace("www.", "")
+    if not host:
+        return source or "?"
+    label = host.split(".")[0]
+    return label.title() if label.isalpha() else host
+
+
 def offer_problem(o: Offer, mrp=None, price=None):
     """Why an offer can't stand for what the product sells for in India, if it can't."""
     name = o.seller.lower()
@@ -113,7 +131,20 @@ def _in_stock(store: dict) -> bool:
 def check(serp: Serp, asin: str) -> dict:
     listing, amazon_raw = amazon_product(serp, asin)
     if listing is None:
-        return {"error": f"Amazon.in has no price for {asin}. The listing may be unavailable."}
+        # No price usually means the listing is dead, but its title still names the
+        # product, so offer the listings that do have a price.
+        dead = amazon_raw.get("product_results") or {}
+        title, stock = dead.get("title", ""), (dead.get("stock") or "").strip().rstrip(".")
+        why = f"This Amazon.in listing has no price{f' — it says \'{stock}\'' if stock else ''}."
+        if not title:
+            return {"error": f"{why} Nothing else to go on for {asin}."}
+        brand = re.sub(r"^Visit the (.*) Store$", r"\1", dead.get("brand", "") or "")
+        try:
+            suggestions = amazon_search(serp, match.search_query(title, brand))
+        except (DemoMiss, SerpError):
+            suggestions = []
+        return {"error": why, "unavailable": True, "title": title,
+                "suggestions": [s for s in suggestions if s["price"]][:6]}
     if not listing["brand"]:
         return {"error": "This listing names no brand, so other sellers' listings can't be matched to it safely."}
 
@@ -228,6 +259,28 @@ def check(serp: Serp, asin: str) -> dict:
 
     # Still nothing? The precise query may be too narrow ('Prestige PIC 20 Watts'
     # finds gas stoves), so try the bare brand and model once.
+    # Still thin? Google Lens sees the product in the photo and often quotes the
+    # sellers it recognises, which is a different index from Shopping's.
+    if not enough() and listing.get("thumbnail"):
+        try:
+            lens = serp.search(engine="google_lens", url=listing["thumbnail"], country="in", hl="en")
+            seen = 0
+            for m in lens.get("visual_matches") or []:
+                price = m.get("price") or {}
+                link = m.get("link", "")
+                if price.get("currency") != "₹" or not price.get("extracted_value"):
+                    continue   # Lens quotes foreign listings too; rupees only
+                if any(h in (urlparse(link).hostname or "") for h in NOT_A_SHOP):
+                    continue   # a social post quoting a price is not a seller
+                seen += 1
+                add(Offer(seller=seller_from(m.get("source", ""), link, m.get("title", "")),
+                          price=price["extracted_value"], title=m.get("title", ""),
+                          link=link, logo=m.get("source_icon", "")))
+            trail.append({"engine": "google_lens", "query": "the listing's own photo",
+                          "found": plural(seen, "seller price") + " recognised in the image"})
+        except (DemoMiss, SerpError):
+            pass   # an extra look, never required
+
     short_q = match.short_query(title, brand, model)
     if not enough() and short_q.lower() != shopping_q.lower():
         try:

@@ -604,7 +604,7 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 | 11 | Console replay, counters, gallery filters | Frontend | `app.js`, `index.html` |
 | 12 | Report: gauges, price chart, trail, evidence funnel | Frontend | `app.js`, `style.css` |
 | 13 | `#check/ASIN` links | Frontend | `app.js` |
-| 14 | 38 tests + two frozen evaluation sets | Testing | `tests/`, `scripts/evaluate.py` |
+| 14 | 40 tests + two frozen evaluation sets (11/14) | Testing | `tests/`, `scripts/evaluate.py` |
 | 15 | One-command start | Tooling | `run.sh` |
 | 16 | Chrome extension: verdict on the Amazon.in page | Frontend | `extension/` |
 | 17 | Shorter fallback search + manufacturer model codes | Core | `match.py`, `pipeline.py` |
@@ -616,6 +616,11 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 | 23 | Delivery-inclusive totals and conditional savings | Core | `signals.py`, `pipeline.py` |
 | 24 | Shelf scan of a whole search | Backend | `pipeline.py`, `api.py` |
 | 25 | Check from a photo (`google_lens`) | Backend | `api.py` |
+| 26 | Lens as a price source when sellers are thin | Core | `pipeline.py` |
+| 27 | Seller names taken from the link host when Lens gives a title | Core | `pipeline.py` |
+| 28 | No street price from two sellers who disagree | Core | `verdict.py` |
+| 29 | Unavailable listing suggests live ones instead | Backend | `pipeline.py` |
+| 30 | CI on every push, MIT licence | Tooling | `.github/workflows/tests.yml`, `LICENSE` |
 
 ### Data Flow Architecture
 

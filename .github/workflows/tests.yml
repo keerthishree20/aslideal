@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    env:
+      DEMO_MODE: "1"        # the suite runs on recorded responses; never call SerpApi in CI
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r backend/requirements-dev.txt
+      - name: Run tests
+        working-directory: backend     # pytest.ini lives here; from the repo root the imports fail
+        run: python -m pytest -q
+      - name: Replay the evaluation sets
+        working-directory: backend
+        run: python -m scripts.evaluate

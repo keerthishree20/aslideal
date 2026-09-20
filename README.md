@@ -97,7 +97,7 @@ Every verdict comes from six SerpApi engines. There's no other data source.
 | `google_shopping` (`gl=in`) | Indian sellers' listings and prices for the model |
 | `google` web search (`gl=in`) | More sellers from the popular-products block, plus retailer pages (Flipkart, Vijay Sales, the brand's own store) whose snippet carries a price and stock status |
 | `google_immersive_product` | Every store behind a grouped Google product, with price, delivery and stock |
-| `google_lens` | Names a product from a photo, with the sellers and prices Lens saw |
+| `google_lens` | Names a product from a photo, and recognises sellers and prices in the listing's own image when the other engines come up short |
 
 A live check costs at most five searches. Every response is cached on disk, so repeating a check is free. The cache also serves as the demo data.
 
@@ -137,34 +137,29 @@ The wording states what the prices show and nothing about intent.
 | JBL Tune 520BT | Real saving: 17% below 6 other sellers |
 | Philips HL7756 mixer grinder | Real saving: 10% below 3 other sellers |
 | Prestige PIC 20 induction cooktop | Real saving: 13% below 10 other sellers |
-| Redmi Note 14 Pro 5G (8/128) | Not enough data: other sellers list the Pro+ or 256GB |
-| Noise Pro 6 smart watch | Not enough data: one other seller |
-| Samsung Galaxy M36 5G | Not enough data: Google returns other phones |
-| Samsung Galaxy M56 5G | Listing had no price on Amazon.in |
+| Redmi Note 14 Pro 5G (8/128) | Cheaper elsewhere: 15% above the ₹22,644 that 4 sellers charge |
+| Samsung Galaxy M36 5G | Cheaper elsewhere: 5% above 4 other sellers |
+| Noise Pro 6 smart watch | Not enough data: two sellers, ₹5,499 and ₹8,999, no going rate |
+| Samsung Galaxy M56 5G | Listing unavailable on Amazon.in; live listings suggested instead |
 
 | Set B (2026-09-20) | Verdict |
 |---|---|
-| Prestige Iris 750W mixer grinder | Real saving: 45% below the ₹6,295 that 3 sellers charge |
-| Milton Thermosteel flask 1L | Not enough data |
-| Havells Instanio 3L water heater | Not enough data: other listings omit the size |
-| boAt Rockerz 255 Pro+ | Not enough data: one other seller |
-| Philips hair straightener | Not enough data |
-| Nivea Men face wash 100g | Not enough data: other listings are 50ml twin packs |
+| Havells Instanio 3L water heater | Discount from a price nobody charges: "31% off" ₹5,290 |
+| Prestige Iris 750W mixer grinder | Real saving: 45% below 3 other sellers |
+| boAt Rockerz 255 Pro+ | The going rate: 9 other sellers at about ₹1,199 |
+| Milton Thermosteel flask 1L | The going rate: 3 other sellers at about ₹1,052 |
+| Philips hair straightener | The going rate: 4 other sellers at about ₹2,032 |
+| Nivea Men face wash 100g | Not enough data: one other seller |
 
-**5 of 14 reach a verdict.** Everything else says so instead of guessing.
+**11 of 14 reach a verdict**, up from 5 of 14. Everything else says so instead of guessing.
 
-### What was tried to raise it
+### What moved the number
 
-Coverage is set by how many Indian sellers Google indexes for an exact model, not by the matching rules, and on these sets it barely moved:
+- **Google Lens as a price source.** Lens recognises the product in the listing's own photo and names the shops it sees, with prices — a different index from Google Shopping's. It runs only when the other engines come up short, and it took coverage from 5 of 14 to 11 of 14 for 7 searches.
+- **Careful reading of what Lens returns.** Lens sometimes puts the page title where the shop's name belongs, so the seller is taken from the link's hostname instead, and a Facebook post quoting a price is not counted as a shop.
+- **Refusing a street price from two sellers who disagree.** The Noise watch had one seller at ₹5,499 and one at ₹8,999; the median between them is a price neither charges, so it now says so.
 
-- **A second, shorter search** when the first finds nothing (brand and model only, or the manufacturer's model code for a title like "Philips India's No.1 Hair Styling Brand Hair Straightener"). Added sellers for two products; changed no verdict.
-- **Reading prices from both halves** of a Google result's rich snippet. No change on these sets.
-- **Normalising sizes**, so "3L", "3 L" and "3 Litre" are one thing, and "750 W" matches a plain "750".
-
-Two changes did make results *more* correct, which matters more than the count:
-
-- The Prestige PIC 20's evidence went from 2 sellers to 10 once its search query dropped a stray "Watts", and its verdict changed with it.
-- The Prestige Iris was briefly compared against the **3-jar** version of the same mixer, a different SKU at a different price. Listings that state a different count of jars or packs are now rejected, the same way phone memory already was.
+Earlier attempts that changed nothing on these sets are kept in the history: a shorter fallback search, manufacturer model codes, reading both halves of a Google rich snippet, and size normalisation ("3 L" = "3L"). Two of those did make results *more correct*: the Prestige PIC 20's evidence went from 2 sellers to 10, and the Prestige Iris stopped being priced against the 3-jar version of the same mixer.
 
 ## Limitations
 

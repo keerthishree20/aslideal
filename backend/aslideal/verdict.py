@@ -26,6 +26,8 @@ SAME_PRICE = 0.05
 BIG_CLAIM = 0.20
 # A seller within this fraction of the MRP counts as charging the MRP.
 AT_MRP = 0.95
+# With only two other sellers, this much disagreement means there's no going rate.
+SPREAD = 1.5
 
 
 @dataclass
@@ -90,6 +92,15 @@ def judge(price: float, mrp, offers: list) -> Verdict:
     if len(others) < MIN_SELLERS:
         found = {0: "No other in-stock seller", 1: "Only one other in-stock seller"}[len(others)]
         v.headline = f"{found} found for this exact product. That's not enough to say what it normally sells for."
+        return v
+
+    # Two sellers who disagree wildly have no midpoint worth quoting: the median
+    # would sit at a price neither of them charges.
+    prices = sorted(o.price for o in others)
+    if len(others) == 2 and prices[1] > SPREAD * prices[0]:
+        v.headline = (f"Only two other in-stock sellers, and they disagree: {rupees(prices[0])} and "
+                      f"{rupees(prices[1])}. That's not a street price.")
+        v.notes.append("A third seller would settle it; check again later.")
         return v
 
     street = median(o.price for o in others)

@@ -26,6 +26,7 @@ const TRAIL_NAMES = {
   google_shopping: "Searched Google Shopping India",
   google: "Searched Google India",
   google_immersive_product: "Opened a Google product page",
+  google_lens: "Looked at the product photo",
   match: "Matched the exact model",
 };
 
@@ -281,6 +282,10 @@ async function runCheck(asin) {
   try {
     const r = await api("/api/check/" + encodeURIComponent(asin));
     stop();
+    if (r.unavailable) {
+      toast(r.error + " Showing listings that do have one.");
+      return renderResults(r.suggestions || []);
+    }
     renderReport(r);
   } catch (err) {
     stop();

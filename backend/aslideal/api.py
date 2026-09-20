@@ -140,6 +140,8 @@ def check_asin(asin: str):
     if not asin:
         raise HTTPException(400, "That isn't an Amazon product ID.")
     result = _answer(check, asin)
+    if result.get("unavailable"):
+        return result          # dead listing, but we can point at live ones
     if "error" in result:
         raise HTTPException(422, result["error"])
     return result

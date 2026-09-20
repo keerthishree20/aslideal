@@ -11,7 +11,7 @@ EXPECTED = {
     "B0C3V5X3QT": "real_deal",      # JBL Tune 520BT
     "B01GZSQJPA": "real_deal",      # Philips HL7756
     "B00YMJ0OI8": "real_deal",      # Prestige PIC 20: 10 sellers found once the query dropped "Watts"
-    "B0F7LXZG7S": "unverified",     # Redmi Note 14 Pro: no other seller states the same memory
+    "B0F7LXZG7S": "above_market",   # Redmi Note 14 Pro: Lens found four 8GB/128GB sellers, all cheaper
 }
 
 
@@ -52,3 +52,13 @@ def test_parse_asin():
 def test_demo_mode_never_calls_out(serp):
     with pytest.raises(DemoMiss):
         serp.search(engine="amazon_product", asin="B000000000", amazon_domain="amazon.in")
+
+
+def test_seller_name_falls_back_to_the_link_host():
+    from aslideal.pipeline import seller_from
+    title = "Noise Pro 6 1.85'' Amoled Dispay with AI Watch Faces"
+    # Lens gave the page title where the shop's name belongs
+    assert seller_from(title, "https://www.flipkart.com/noise-pro-6", title) == "Flipkart"
+    assert seller_from("", "https://mymec.in/product/x", "Havells Instanio") == "Mymec"
+    # a real shop name is kept as it is
+    assert seller_from("Vijay Sales", "https://www.vijaysales.com/p", "Samsung Galaxy M36") == "Vijay Sales"

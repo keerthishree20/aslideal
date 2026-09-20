@@ -43,3 +43,13 @@ def test_indian_number_grouping():
     assert rupees(1399) == "₹1,399"
     assert rupees(123456) == "₹1,23,456"
     assert rupees(12345678) == "₹1,23,45,678"
+
+
+def test_two_sellers_who_disagree_have_no_street_price():
+    v = judge(5499, 8999, offers(5499, 8999))
+    assert v.kind == "unverified"
+    assert "disagree" in v.headline
+    # a third seller settles it
+    assert judge(5499, 8999, offers(5499, 8999, 5599)).kind != "unverified"
+    # two sellers who roughly agree are fine
+    assert judge(3005, 4999, offers(3499, 3599)).kind == "real_deal"

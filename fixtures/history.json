@@ -9,11 +9,31 @@
    "real_discount": 0.0,
    "sellers": 2,
    "kind": "reference_gap"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 1399,
+   "mrp": 4490,
+   "claimed_discount": 0.6884187082405345,
+   "street_price": 1399.0,
+   "real_discount": 0.0,
+   "sellers": 2,
+   "kind": "reference_gap"
   }
  ],
  "B0C3V5X3QT": [
   {
    "date": "2026-09-20",
+   "price": 3005,
+   "mrp": 4999,
+   "claimed_discount": 0.3988797759551911,
+   "street_price": 3599.0,
+   "real_discount": 0.16504584606835238,
+   "sellers": 6,
+   "kind": "real_deal"
+  },
+  {
+   "date": "2026-09-21",
    "price": 3005,
    "mrp": 4999,
    "claimed_discount": 0.3988797759551911,
@@ -33,11 +53,31 @@
    "real_discount": 0.10259040779687101,
    "sellers": 3,
    "kind": "real_deal"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 3499,
+   "mrp": 4795,
+   "claimed_discount": 0.27028154327424403,
+   "street_price": 3899.0,
+   "real_discount": 0.10259040779687101,
+   "sellers": 3,
+   "kind": "real_deal"
   }
  ],
  "B00YMJ0OI8": [
   {
    "date": "2026-09-20",
+   "price": 2330,
+   "mrp": 3645,
+   "claimed_discount": 0.36076817558299035,
+   "street_price": 2684.5,
+   "real_discount": 0.13205438629167443,
+   "sellers": 10,
+   "kind": "real_deal"
+  },
+  {
+   "date": "2026-09-21",
    "price": 2330,
    "mrp": 3645,
    "claimed_discount": 0.36076817558299035,
@@ -57,6 +97,16 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 25939,
+   "mrp": 28999,
+   "claimed_discount": 0.10552088003034588,
+   "street_price": 22644.5,
+   "real_discount": -0.1454878668109254,
+   "sellers": 4,
+   "kind": "above_market"
   }
  ],
  "B0DGXRLS1C": [
@@ -69,6 +119,16 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 5499,
+   "mrp": 8999,
+   "claimed_discount": 0.388932103567063,
+   "street_price": 5499.0,
+   "real_discount": 0.0,
+   "sellers": 3,
+   "kind": "going_rate"
   }
  ],
  "B0FDB9ZCTD": [
@@ -81,6 +141,16 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 23999,
+   "mrp": 26999,
+   "claimed_discount": 0.11111522648987004,
+   "street_price": 22749.0,
+   "real_discount": -0.05494747021847113,
+   "sellers": 4,
+   "kind": "above_market"
   }
  ],
  "B00MIYM0VS": [
@@ -93,6 +163,16 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 965,
+   "mrp": 1205,
+   "claimed_discount": 0.19917012448132776,
+   "street_price": 1052.0,
+   "real_discount": 0.08269961977186313,
+   "sellers": 3,
+   "kind": "going_rate"
   }
  ],
  "B078JDNZJ8": [
@@ -105,6 +185,16 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 3649,
+   "mrp": 5290,
+   "claimed_discount": 0.31020793950850667,
+   "street_price": 3699.0,
+   "real_discount": 0.013517166801838343,
+   "sellers": 3,
+   "kind": "reference_gap"
   }
  ],
  "B08TTXNZ4Y": [
@@ -117,11 +207,31 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 1199,
+   "mrp": 3990,
+   "claimed_discount": 0.6994987468671678,
+   "street_price": 1199.0,
+   "real_discount": 0.0,
+   "sellers": 9,
+   "kind": "going_rate"
   }
  ],
  "B08CFJBZRK": [
   {
    "date": "2026-09-20",
+   "price": 3459,
+   "mrp": 6295,
+   "claimed_discount": 0.4505162827640985,
+   "street_price": 6295,
+   "real_discount": 0.4505162827640985,
+   "sellers": 3,
+   "kind": "real_deal"
+  },
+  {
+   "date": "2026-09-21",
    "price": 3459,
    "mrp": 6295,
    "claimed_discount": 0.4505162827640985,
@@ -141,11 +251,31 @@
    "real_discount": null,
    "sellers": 0,
    "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 1999,
+   "mrp": 2195,
+   "claimed_discount": 0.08929384965831433,
+   "street_price": 1975.0,
+   "real_discount": -0.012151898734177324,
+   "sellers": 5,
+   "kind": "going_rate"
   }
  ],
  "B006LX9VPU": [
   {
    "date": "2026-09-20",
+   "price": 170,
+   "mrp": 225,
+   "claimed_discount": 0.24444444444444446,
+   "street_price": null,
+   "real_discount": null,
+   "sellers": 0,
+   "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
    "price": 170,
    "mrp": 225,
    "claimed_discount": 0.24444444444444446,
@@ -165,6 +295,16 @@
    "real_discount": -0.05849753694581272,
    "sellers": 2,
    "kind": "above_market"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 1719,
+   "mrp": 2499,
+   "claimed_discount": 0.312124849939976,
+   "street_price": 1624.0,
+   "real_discount": -0.05849753694581272,
+   "sellers": 2,
+   "kind": "above_market"
   }
  ],
  "B0FHKHT717": [
@@ -177,11 +317,31 @@
    "real_discount": 0.2065131056393964,
    "sellers": 3,
    "kind": "real_deal"
+  },
+  {
+   "date": "2026-09-21",
+   "price": 999,
+   "mrp": 1999,
+   "claimed_discount": 0.5002501250625313,
+   "street_price": 1259.0,
+   "real_discount": 0.2065131056393964,
+   "sellers": 3,
+   "kind": "real_deal"
   }
  ],
  "B0GZN7C6X8": [
   {
    "date": "2026-09-20",
+   "price": 1799,
+   "mrp": 4999,
+   "claimed_discount": 0.6401280256051209,
+   "street_price": null,
+   "real_discount": null,
+   "sellers": 0,
+   "kind": "unverified"
+  },
+  {
+   "date": "2026-09-21",
    "price": 1799,
    "mrp": 4999,
    "claimed_discount": 0.6401280256051209,
