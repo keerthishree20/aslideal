@@ -33,6 +33,16 @@ Paste an amazon.in product link, or type a product name and pick the exact listi
 
 Needs Python 3.9 or newer. Tests, after `./run.sh` has run once to create the environment: `cd backend && .venv/bin/python -m pytest`.
 
+## The Chrome extension
+
+`extension/` puts the verdict on the Amazon.in product page itself, so you never have to leave it.
+
+![The AsliDeal panel on an Amazon.in product page](docs/extension.png)
+
+Load it in Chrome: `chrome://extensions` → Developer mode → **Load unpacked** → pick the `extension/` folder. Then open any amazon.in product page.
+
+**It needs the app running locally.** The panel asks `http://localhost:8000` for the verdict, so start `./run.sh` first; without it the panel says so. The extension is a thin client: all the checking happens in the same backend, and the demo data works here too, so recorded products answer with no API key.
+
 ## How SerpApi is used
 
 Every verdict comes from five SerpApi engines. There's no other data source.
