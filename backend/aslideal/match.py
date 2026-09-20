@@ -17,8 +17,8 @@ differently, so they aren't required.
 2. The candidate's name must not add a tier word (pro, max, plus...) the
    reference lacks: '15' is in 'iPhone 15 Pro' too.
 3. The brand has to appear. A reference with no brand isn't matched at all.
-4. A reference that states its memory (8GB, 128GB) only matches listings
-   stating the same memory.
+4. A reference that states its memory (8GB, 128GB), or a count of jars or
+   packs, only matches listings stating the same.
 5. If the reference's name says what the product is after the model number
    ('Pro 6 Smart Watch'), the candidate must share one of those words:
    'Air Buds Pro 6' is earbuds.
@@ -40,22 +40,29 @@ ACCESSORY_WORDS = {
     # not new
     "refurbished", "renewed", "refurb", "used", "preowned", "pre",
 }
-TIER_WORDS = {"pro", "max", "plus", "ultra", "lite", "mini", "neo", "fe", "anc"}
+TIER_WORDS = {"pro", "max", "plus", "ultra", "lite", "mini", "neo", "fe", "anc", "prime"}
 # Words sellers attach inconsistently; never evidence of a different product.
 FILLER = {"the", "with", "and", "for", "of", "in", "new", "launch", "latest", "edition", "&", "w"}
 
 _TOKEN = re.compile(r"[a-z0-9]+(?:\.[0-9]+)?\+?")
 
 
-_CAPACITY_GAP = re.compile(r"(\d+)\s+(gb|tb)\b")
 _CAPACITY = re.compile(r"^\d+(?:gb|tb)$")
+# Sellers write the same size a dozen ways: '3L', '3 L', '3 Litre', '750 W', '100 g'.
+_UNIT_GAP = re.compile(r"(\d+)\s*(gb|tb|ml|l|ltr|litre|litres|liter|liters|g|gm|gms|kg|w|watt|watts)\b")
+_UNIT_CANON = {"ltr": "l", "litre": "l", "litres": "l", "liter": "l", "liters": "l",
+               "gm": "g", "gms": "g", "watt": "w", "watts": "w"}
+
+
+def _join_units(text: str) -> str:
+    return _UNIT_GAP.sub(lambda m: m.group(1) + _UNIT_CANON.get(m.group(2), m.group(2)), text)
 
 
 def tokens(text: str) -> list:
     """Lowercase words, with a trailing '+' split off as 'plus' (Pro+ is not Pro)
-    and '128 GB' joined to '128gb'."""
+    and sizes normalised, so '3 Litre', '3L' and '3 L' are all '3l'."""
     out = []
-    for t in _TOKEN.findall(_CAPACITY_GAP.sub(r"\1\2", (text or "").lower())):
+    for t in _TOKEN.findall(_join_units((text or "").lower())):
         if t.endswith("+"):
             out += [t[:-1], "plus"]
         else:
@@ -107,9 +114,30 @@ def describing_words(title: str, brand: str = "") -> set:
     return out
 
 
+# '4 Jars' and '3 Jars' are different SKUs of the same mixer, at different prices.
+_COUNTED = re.compile(r"(\d+)\s*(?:[a-z]+\s+){0,3}(jars?|packs?)\b")
+
+
+def counts(text: str) -> dict:
+    out = {}
+    for n, noun in _COUNTED.findall((text or "").lower()):
+        out.setdefault(noun.rstrip("s"), set()).add(int(n))
+    return out
+
+
 def is_accessory(candidate: str, reference: str) -> bool:
     extra = set(tokens(candidate)) - set(tokens(reference))
     return bool(extra & ACCESSORY_WORDS)
+
+
+_SIZED = re.compile(r"^(\d+)(?:gb|tb|ml|l|g|kg|w)$")
+
+
+def bare(token: str) -> str:
+    """'750w' -> '750', so a seller writing '750 Watt', '750W' or plain '750' all match.
+    The memory rule still compares the full tokens, so 128GB never passes as 256GB."""
+    m = _SIZED.match(token)
+    return m.group(1) if m else token
 
 
 def contains_run(words: list, run: list) -> bool:
@@ -117,16 +145,19 @@ def contains_run(words: list, run: list) -> bool:
     return any(words[i:i + n] == run for i in range(len(words) - n + 1))
 
 
-def same_product(reference: str, candidate: str, brand: str = "") -> bool:
+def same_product(reference: str, candidate: str, brand: str = "", model: str = "") -> bool:
     cand_words = [t for t in tokens(candidate) if t not in FILLER]
     cand_tokens = set(cand_words)
-    # In order and side by side: 'Pro 6' is not 'Buds Air 6 Pro'.
-    if not contains_run(cand_words, identity(reference, brand)):
+    # A manufacturer's model code is the strongest identity there is, and it rescues
+    # titles that open with marketing ("Philips India's No.1 Hair Styling Brand...").
+    if model and model in cand_tokens:
+        pass
+    elif not contains_run([bare(t) for t in cand_words], [bare(t) for t in identity(reference, brand)]):
+        # In order and side by side: 'Pro 6' is not 'Buds Air 6 Pro'.
         return False
-    # 'Pro 6' is inside 'Air Buds Pro 6' too. If the reference's name goes on to
-    # say what it is ('Smart Watch', 'Mixer Grinder'), the candidate has to share a word of it.
-    kind = describing_words(reference, brand)
-    if kind and not kind & cand_tokens:
+    elif describing_words(reference, brand) and not describing_words(reference, brand) & cand_tokens:
+        # 'Pro 6' is inside 'Air Buds Pro 6' too. If the reference's name goes on to
+        # say what it is ('Smart Watch', 'Mixer Grinder'), the candidate has to share a word of it.
         return False
     # Against the reference's name only: a 'pro' in Amazon's feature blurb
     # ('Hustle like a pro') must not excuse a Pro model.
@@ -135,6 +166,11 @@ def same_product(reference: str, candidate: str, brand: str = "") -> bool:
         return False
     # 8GB/128GB and 8GB/256GB are the same name at different prices. A reference
     # that states its memory only matches listings that state the same memory.
+    # A listing that states a different number of jars (or packs) is a different SKU.
+    ref_counts, cand_counts = counts(reference), counts(candidate)
+    for noun, nums in cand_counts.items():
+        if noun in ref_counts and not (nums & ref_counts[noun]):
+            return False
     ref_caps = {t for t in tokens(reference) if _CAPACITY.match(t)}
     cand_caps = {t for t in cand_tokens if _CAPACITY.match(t)}
     if ref_caps and (not cand_caps or not cand_caps <= ref_caps):
@@ -155,6 +191,28 @@ def similarity(reference: str, candidate: str) -> float:
     return len(a & b) / len(a | b)
 
 
+def model_token(model_number: str) -> str:
+    """'BHS393/00' -> 'bhs393'. Only codes with a digit count; '2024' alone doesn't."""
+    if not model_number:
+        return ""
+    head = re.split(r"[/\\ ]", str(model_number).strip())[0].lower()
+    head = re.sub(r"[^a-z0-9]", "", head)
+    has_letters = any(c.isalpha() for c in head)
+    return head if len(head) >= 4 and any(c.isdigit() for c in head) and has_letters else ""
+
+
+def short_query(title: str, brand: str = "", model: str = "") -> str:
+    """The second try when the fuller query finds nothing: brand and model name, or
+    the manufacturer's model code for a title that never names its model
+    ("Philips India's No.1 Hair Styling Brand Hair Straightener")."""
+    if model and model not in tokens(title):
+        return f"{brand} {model}".strip()
+    original = {t.lower(): t for t in re.findall(r"[A-Za-z0-9.]+", core_name(title))}
+    ident = identity(title, brand)
+    spell = lambda t: original.get(t) or original.get(bare(t)) or bare(t)
+    return " ".join(([brand] if brand else []) + [spell(t) for t in ident])
+
+
 def search_query(title: str, brand: str = "") -> str:
     """What to type into Google Shopping: brand, identity, and one describing word.
 
@@ -163,7 +221,8 @@ def search_query(title: str, brand: str = "") -> str:
     ident = identity(title, brand)
     words = [t for t in tokens(core_name(title)) if t not in set(tokens(brand))]
     after = [t for t in words[len(ident):] if not is_model(t) and t not in FILLER][:1]
-    # Keep the seller's own spelling (HL7756, not hl7756) where the words line up.
+    # Keep the seller's own spelling: 'HL7756' not 'hl7756', and '750' not the
+    # normalised '750w', which Google matches poorly.
     original = {t.lower(): t for t in re.findall(r"[A-Za-z0-9.]+", core_name(title))}
-    parts = ([brand] if brand else []) + [original.get(t, t) for t in ident + after]
-    return " ".join(parts)
+    spell = lambda t: original.get(t) or original.get(bare(t)) or bare(t)
+    return " ".join(([brand] if brand else []) + [spell(t) for t in ident + after])

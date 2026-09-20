@@ -32,18 +32,18 @@
  {
   "asin": "B00YMJ0OI8",
   "name": "Prestige PIC 20 induction cooktop",
-  "kind": "reference_gap",
-  "headline": "\"36% off\" is measured from ₹3,645, which none of the 2 other in-stock sellers charge. They sell it for about ₹2,471, so the saving vs the market is 6%.",
-  "sellers": 2,
+  "kind": "real_deal",
+  "headline": "Real saving: 13% below the ₹2,684 that 10 other in-stock sellers charge.",
+  "sellers": 10,
   "price": 2330,
   "mrp": 3645,
-  "street": 2471.0
+  "street": 2684.5
  },
  {
   "asin": "B0F7LXZG7S",
   "name": "Redmi Note 14 Pro 5G",
   "kind": "unverified",
-  "headline": "No other in-stock seller found for this exact product. That's not enough to say what it normally sells for.",
+  "headline": "Only one other in-stock seller found for this exact product. That's not enough to say what it normally sells for.",
   "sellers": 0,
   "price": 25939,
   "mrp": 28999,
@@ -73,6 +73,66 @@
   "sellers": 0,
   "price": 23999,
   "mrp": 26999,
+  "street": null
+ },
+ {
+  "asin": "B00MIYM0VS",
+  "name": "Milton Thermosteel flask 1L",
+  "kind": "unverified",
+  "headline": "No other in-stock seller found for this exact product. That's not enough to say what it normally sells for.",
+  "sellers": 0,
+  "price": 965,
+  "mrp": 1205,
+  "street": null
+ },
+ {
+  "asin": "B078JDNZJ8",
+  "name": "Havells Instanio 3L water heater",
+  "kind": "unverified",
+  "headline": "No other in-stock seller found for this exact product. That's not enough to say what it normally sells for.",
+  "sellers": 0,
+  "price": 3649,
+  "mrp": 5290,
+  "street": null
+ },
+ {
+  "asin": "B08TTXNZ4Y",
+  "name": "boAt Rockerz 255 Pro+",
+  "kind": "unverified",
+  "headline": "Only one other in-stock seller found for this exact product. That's not enough to say what it normally sells for.",
+  "sellers": 0,
+  "price": 1199,
+  "mrp": 3990,
+  "street": null
+ },
+ {
+  "asin": "B08CFJBZRK",
+  "name": "Prestige Iris 750W mixer grinder",
+  "kind": "real_deal",
+  "headline": "Real saving: 45% below the ₹6,295 that 3 other in-stock sellers charge.",
+  "sellers": 3,
+  "price": 3459,
+  "mrp": 6295,
+  "street": 6295
+ },
+ {
+  "asin": "B095BPMHWH",
+  "name": "Philips hair straightener",
+  "kind": "unverified",
+  "headline": "Couldn't find this exact product sold anywhere else, so there's nothing to compare against.",
+  "sellers": 0,
+  "price": 1999,
+  "mrp": 2195,
+  "street": null
+ },
+ {
+  "asin": "B006LX9VPU",
+  "name": "Nivea Men face wash 100g",
+  "kind": "unverified",
+  "headline": "Only one other in-stock seller found for this exact product. That's not enough to say what it normally sells for.",
+  "sellers": 0,
+  "price": 170,
+  "mrp": 225,
   "street": null
  }
 ]

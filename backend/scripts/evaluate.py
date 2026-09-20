@@ -32,6 +32,17 @@ FROZEN_SET = {
     "B0F43VZ4H1": "Samsung Galaxy M56 5G",
     "B0FDB9ZCTD": "Samsung Galaxy M36 5G",
 }
+# A second set, fixed on 2026-09-20 to measure coverage beyond the first eight:
+# different categories, and deliberately awkward listings (no model number in the
+# title, a brand Amazon's search doesn't name).
+SET_B = {
+    "B00MIYM0VS": "Milton Thermosteel flask 1L",
+    "B078JDNZJ8": "Havells Instanio 3L water heater",
+    "B08TTXNZ4Y": "boAt Rockerz 255 Pro+",
+    "B08CFJBZRK": "Prestige Iris 750W mixer grinder",
+    "B095BPMHWH": "Philips hair straightener",
+    "B006LX9VPU": "Nivea Men face wash 100g",
+}
 NO_VERDICT = {"unverified", "error", "not_in_demo_data"}
 OUT = ROOT / "fixtures" / "evaluation.json"
 
@@ -39,8 +50,25 @@ OUT = ROOT / "fixtures" / "evaluation.json"
 def main():
     load_dotenv(ROOT / ".env")
     serp = Serp()
+    sets = {"set A (2026-09-18)": FROZEN_SET, "set B (2026-09-20)": SET_B}
+    if len(sys.argv) > 1 and sys.argv[1] == "--set-a":
+        sets = {"set A (2026-09-18)": FROZEN_SET}
     rows = []
-    for asin, name in FROZEN_SET.items():
+    for label, products in sets.items():
+        print(f"\n{label}")
+        rows += run_set(serp, products)
+    counts = Counter(r["kind"] for r in rows)
+    verdicts = sum(n for k, n in counts.items() if k not in NO_VERDICT)
+    print(f"\n{verdicts}/{len(rows)} listings reached a verdict  {dict(counts)}")
+    quota = serp.quota()
+    print(f"live searches this run: {serp.live_calls}" + (f", left this month: {quota['left']}" if quota else ""))
+    OUT.write_text(json.dumps(rows, indent=1, ensure_ascii=False))
+    return 0
+
+
+def run_set(serp, products):
+    rows = []
+    for asin, name in products.items():
         try:
             r = check(serp, asin)
         except DemoMiss:
@@ -58,14 +86,7 @@ def main():
             "sellers": v["sellers_used"], "price": v["price"], "mrp": v["mrp"], "street": v["street_price"],
         })
         print(f"{name[:34]:34} {v['kind']:14} sellers={v['sellers_used']:<2} {v['headline'][:90]}", flush=True)
-
-    counts = Counter(r["kind"] for r in rows)
-    verdicts = sum(n for k, n in counts.items() if k not in NO_VERDICT)
-    print(f"\n{verdicts}/{len(rows)} listings reached a verdict  {dict(counts)}")
-    quota = serp.quota()
-    print(f"live searches this run: {serp.live_calls}" + (f", left this month: {quota['left']}" if quota else ""))
-    OUT.write_text(json.dumps(rows, indent=1, ensure_ascii=False))
-    return 0
+    return rows
 
 
 if __name__ == "__main__":

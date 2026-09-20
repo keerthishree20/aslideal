@@ -85,20 +85,42 @@ The wording states what the prices show and nothing about intent.
 
 ## Measured coverage
 
-`backend/scripts/evaluate.py` runs a fixed set of 8 Amazon.in listings, all showing an M.R.P. The set was fixed on 2026-09-18 and hasn't been edited to improve the score. Three of the products were also used while developing the matcher. Results as of 2026-09-18:
+`backend/scripts/evaluate.py` runs two fixed sets of Amazon.in listings, all showing an M.R.P. Sets are frozen by ASIN and never edited to improve the score. Set A was fixed on 2026-09-18 (three of its products were also used while developing the matcher); set B on 2026-09-20, chosen to be awkward on purpose: other categories, titles with no model number, a listing whose brand Amazon's search doesn't name.
 
-| Product | Verdict |
+| Set A (2026-09-18) | Verdict |
 |---|---|
-| boAt Airdopes Prime 412 | Discount from a price nobody charges: "69% off" ₹4,490, market price ₹1,399 |
-| Prestige PIC 20 induction cooktop | Discount from a price nobody charges: "36% off" ₹3,645, market price about ₹2,470 |
+| boAt Airdopes Prime 412 | Discount from a price nobody charges: "69% off" ₹4,490, market ₹1,399 |
 | JBL Tune 520BT | Real saving: 17% below 6 other sellers |
 | Philips HL7756 mixer grinder | Real saving: 10% below 3 other sellers |
-| Redmi Note 14 Pro 5G (8/128) | Not enough data: no other seller of the same variant found |
+| Prestige PIC 20 induction cooktop | Real saving: 13% below 10 other sellers |
+| Redmi Note 14 Pro 5G (8/128) | Not enough data: other sellers list the Pro+ or 256GB |
 | Noise Pro 6 smart watch | Not enough data: one other seller |
-| Samsung Galaxy M36 5G | Not enough data |
+| Samsung Galaxy M36 5G | Not enough data: Google returns other phones |
 | Samsung Galaxy M56 5G | Listing had no price on Amazon.in |
 
-**4 of 8 reach a verdict.** The rest say so instead of guessing. Three of the misses come from too few Indian sellers indexed by Google for the exact model, and one from Amazon.in showing no price for the listing. Phones are hardest, because a listing must state the same memory variant to count.
+| Set B (2026-09-20) | Verdict |
+|---|---|
+| Prestige Iris 750W mixer grinder | Real saving: 45% below the ₹6,295 that 3 sellers charge |
+| Milton Thermosteel flask 1L | Not enough data |
+| Havells Instanio 3L water heater | Not enough data: other listings omit the size |
+| boAt Rockerz 255 Pro+ | Not enough data: one other seller |
+| Philips hair straightener | Not enough data |
+| Nivea Men face wash 100g | Not enough data: other listings are 50ml twin packs |
+
+**5 of 14 reach a verdict.** Everything else says so instead of guessing.
+
+### What was tried to raise it
+
+Coverage is set by how many Indian sellers Google indexes for an exact model, not by the matching rules, and on these sets it barely moved:
+
+- **A second, shorter search** when the first finds nothing (brand and model only, or the manufacturer's model code for a title like "Philips India's No.1 Hair Styling Brand Hair Straightener"). Added sellers for two products; changed no verdict.
+- **Reading prices from both halves** of a Google result's rich snippet. No change on these sets.
+- **Normalising sizes**, so "3L", "3 L" and "3 Litre" are one thing, and "750 W" matches a plain "750".
+
+Two changes did make results *more* correct, which matters more than the count:
+
+- The Prestige PIC 20's evidence went from 2 sellers to 10 once its search query dropped a stray "Watts", and its verdict changed with it.
+- The Prestige Iris was briefly compared against the **3-jar** version of the same mixer, a different SKU at a different price. Listings that state a different count of jars or packs are now rejected, the same way phone memory already was.
 
 ## Limitations
 

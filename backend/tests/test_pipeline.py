@@ -10,7 +10,7 @@ EXPECTED = {
     "B0FDFRGWN8": "reference_gap",  # boAt Airdopes Prime 412: 69% off ₹4,490, sold at ₹1,399 everywhere
     "B0C3V5X3QT": "real_deal",      # JBL Tune 520BT
     "B01GZSQJPA": "real_deal",      # Philips HL7756
-    "B00YMJ0OI8": "reference_gap",  # Prestige PIC 20
+    "B00YMJ0OI8": "real_deal",      # Prestige PIC 20: 10 sellers found once the query dropped "Watts"
     "B0F7LXZG7S": "unverified",     # Redmi Note 14 Pro: no other seller states the same memory
 }
 

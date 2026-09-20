@@ -10,7 +10,7 @@ from collections import Counter
 from dataclasses import asdict
 
 from . import match
-from .serp import Serp
+from .serp import DemoMiss, Serp
 from .verdict import MIN_SELLERS, Offer, is_own, judge
 
 # Each product page is one search; stop after this many even if sellers are thin.
@@ -73,6 +73,9 @@ def amazon_product(serp: Serp, asin: str):
                         or (data.get("product_details") or {}).get("brand_name")
                         or re.sub(r"^Visit the (.*) Store$", r"\1", listing["brand"]))
     listing["in_stock"] = "in stock" in (pr.get("stock") or "").lower()
+    details = data.get("product_details") or {}
+    specs = data.get("item_specifications") or {}
+    listing["model"] = match.model_token(details.get("model_number") or specs.get("model_number") or "")
     return listing
 
 
@@ -108,7 +111,7 @@ def check(serp: Serp, asin: str) -> dict:
     if not listing["brand"]:
         return {"error": "This listing names no brand, so other sellers' listings can't be matched to it safely."}
 
-    title, brand = listing["title"], listing["brand"]
+    title, brand, model = listing["title"], listing["brand"], listing.get("model", "")
     shopping_q = match.search_query(title, brand)
     shopping = serp.search(engine="google_shopping", q=shopping_q, gl="in", hl="en", location="India")
 
@@ -124,7 +127,7 @@ def check(serp: Serp, asin: str) -> dict:
     def add(o: Offer):
         reason = offer_problem(o, listing["mrp"], listing["price"]) or (
             # Store titles are checked too: one grouped product can hide a different model.
-            None if match.same_product(title, o.title, brand) else "different product or accessory")
+            None if match.same_product(title, o.title, brand, model) else "different product or accessory")
         if reason:
             result["rejected"].append({**asdict(o), "reason": reason})
             return
@@ -135,16 +138,55 @@ def check(serp: Serp, asin: str) -> dict:
 
     # Each Google Shopping result is one seller's price for one listing.
     candidates = []
-    for r in shopping.get("shopping_results", []):
-        if not r.get("source") or not r.get("extracted_price"):
-            continue  # a grouped "₹1,300+" result names no seller and no single price
-        before = len(result["rejected"])
-        add(Offer(seller=r["source"], price=r["extracted_price"], title=r.get("title", ""),
-                  link=r.get("product_link", ""), logo=r.get("source_icon", "")))
-        if len(result["rejected"]) == before and r.get("immersive_product_page_token"):
-            candidates.append(r)
-    trail.append({"engine": "google_shopping", "query": shopping_q,
-                  "found": plural(len(shopping.get("shopping_results", [])), "shopping result")})
+
+    def scan_shopping(data, query):
+        found = []
+        for r in data.get("shopping_results", []):
+            if not r.get("source") or not r.get("extracted_price"):
+                continue  # a grouped "₹1,300+" result names no seller and no single price
+            before = len(result["rejected"])
+            add(Offer(seller=r["source"], price=r["extracted_price"], title=r.get("title", ""),
+                      link=r.get("product_link", ""), logo=r.get("source_icon", "")))
+            if len(result["rejected"]) == before and r.get("immersive_product_page_token"):
+                found.append(r)
+        trail.append({"engine": "google_shopping", "query": query,
+                      "found": plural(len(data.get("shopping_results", [])), "shopping result")})
+        candidates.extend(found)
+
+    def open_products(budget):
+        """Opening a product lists every store that carries it. Amazon's own listing
+        only ever lists Amazon, so other sellers' listings are opened first."""
+        candidates.sort(key=lambda r: (not is_own(r["source"]), bool(r.get("multiple_sources")),
+                                       match.similarity(title, r["title"])), reverse=True)
+        opened = 0
+        while candidates and opened < budget:
+            best = candidates.pop(0)
+            opened += 1
+            product = serp.search(engine="google_immersive_product",
+                                  page_token=best["immersive_product_page_token"], more_stores="true")
+            pr = product.get("product_results", {})
+            if result["matched_product"] is None:
+                result["matched_product"] = {
+                    "title": pr.get("title") or best["title"],
+                    "price_range": pr.get("price_range"),
+                    "rating": pr.get("rating"),
+                    "reviews": pr.get("reviews"),
+                    "thumbnail": (pr.get("thumbnails") or [best.get("thumbnail")])[0],
+                }
+            for st in pr.get("stores", []):
+                add(Offer(seller=st.get("name", "?"), price=st.get("extracted_total") or st.get("extracted_price") or 0,
+                          in_stock=_in_stock(st), title=st.get("title") or pr.get("title") or best["title"],
+                          link=st.get("link", ""), logo=st.get("logo", "")))
+            trail.append({"engine": "google_immersive_product", "query": best["title"][:80],
+                          "found": plural(len(pr.get("stores", [])), "store") + " selling it"})
+            if enough():
+                break
+        return opened
+
+    def enough():
+        return len(_others(offers.values())) >= MIN_SELLERS
+
+    scan_shopping(shopping, shopping_q)
 
     # Google web search surfaces other products and retailer pages (Flipkart,
     # Croma, the brand's own store) that Google Shopping often leaves out.
@@ -159,41 +201,33 @@ def check(serp: Serp, asin: str) -> dict:
             candidates.append(r)
     priced_pages = 0
     for r in web.get("organic_results", []):
-        top = (r.get("rich_snippet") or {}).get("top") or {}
-        price = (top.get("detected_extensions") or {}).get("price")  # a range ('₹18,080 to ₹28,993') is skipped
-        if r.get("source") and price:
+        snippet = r.get("rich_snippet") or {}
+        # Retailer pages carry the price in either half of the rich snippet.
+        for half in (snippet.get("top") or {}, snippet.get("bottom") or {}):
+            price = (half.get("detected_extensions") or {}).get("price")  # a range ('₹18,080 to ₹28,993') is skipped
+            if not (r.get("source") and price):
+                continue
             priced_pages += 1
-            in_stock = not any("out of stock" in e.lower() for e in top.get("extensions", []))
+            in_stock = not any("out of stock" in e.lower() for e in half.get("extensions", []))
             add(Offer(seller=r["source"], price=price, in_stock=in_stock, title=r.get("title", ""), link=r.get("link", ""),
                       logo=r.get("favicon", "")))
+            break
     trail.append({"engine": "google", "query": f"{shopping_q} price",
                   "found": f"{plural(len(web.get('immersive_products', [])), 'product listing')}, "
                            f"{plural(priced_pages, 'retailer page')} with a price"})
 
-    # Opening a product lists every store that carries it. Amazon's own listing
-    # only ever lists Amazon, so other sellers' listings are opened first.
-    candidates.sort(key=lambda r: (not is_own(r["source"]), bool(r.get("multiple_sources")),
-                                   match.similarity(title, r["title"])), reverse=True)
-    for best in candidates[:MAX_PRODUCT_PAGES]:
-        product = serp.search(engine="google_immersive_product",
-                              page_token=best["immersive_product_page_token"], more_stores="true")
-        pr = product.get("product_results", {})
-        if result["matched_product"] is None:
-            result["matched_product"] = {
-                "title": pr.get("title") or best["title"],
-                "price_range": pr.get("price_range"),
-                "rating": pr.get("rating"),
-                "reviews": pr.get("reviews"),
-                "thumbnail": (pr.get("thumbnails") or [best.get("thumbnail")])[0],
-            }
-        for s in pr.get("stores", []):
-            add(Offer(seller=s.get("name", "?"), price=s.get("extracted_total") or s.get("extracted_price") or 0,
-                      in_stock=_in_stock(s), title=s.get("title") or pr.get("title") or best["title"],
-                      link=s.get("link", ""), logo=s.get("logo", "")))
-        trail.append({"engine": "google_immersive_product", "query": best["title"][:80],
-                      "found": plural(len(pr.get("stores", [])), "store") + " selling it"})
-        if len(_others(offers.values())) >= MIN_SELLERS:
-            break
+    used = open_products(MAX_PRODUCT_PAGES)
+
+    # Still nothing? The precise query may be too narrow ('Prestige PIC 20 Watts'
+    # finds gas stoves), so try the bare brand and model once.
+    short_q = match.short_query(title, brand, model)
+    if not enough() and short_q.lower() != shopping_q.lower():
+        try:
+            scan_shopping(serp.search(engine="google_shopping", q=short_q, gl="in", hl="en", location="India"), short_q)
+            open_products(max(1, MAX_PRODUCT_PAGES - used))
+        except DemoMiss:
+            # Demo mode only has what was recorded; a missing second try isn't fatal.
+            pass
 
     final = sorted(offers.values(), key=lambda o: o.price)
     result["offers"] = [asdict(o) for o in final]
