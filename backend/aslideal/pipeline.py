@@ -1,7 +1,8 @@
 """Amazon claim -> Google Shopping product -> every store's price -> verdict.
 
-A check costs at most five searches: the Amazon.in product page, Google
-Shopping, Google web search, and up to two Immersive Product pages.
+A check costs at most seven searches: the Amazon.in product page, Google
+Shopping, Google web search, two Immersive Product pages shared between both
+searches, Google Lens, and one shorter Shopping search when sellers are thin.
 """
 
 import re
@@ -16,7 +17,8 @@ from .verdict import MIN_SELLERS, Offer, is_own, judge
 # Each product page is one search; stop after this many even if sellers are thin.
 MAX_PRODUCT_PAGES = 2
 ASIN_IN_URL = re.compile(r"/(?:dp|gp/product|product)/([A-Z0-9]{10})")
-ASIN = re.compile(r"^[A-Z0-9]{10}$")
+# An ASIN is B0 plus eight characters, or a book's ISBN-10. "SMARTWATCH" is a search.
+ASIN = re.compile(r"^(?:B0[A-Z0-9]{8}|\d{9}[\dX])$")
 FINANCE_WORDS = {"emi", "finance", "loan"}
 # .in storefronts that import foreign stock at foreign prices.
 IMPORT_RESELLERS = ("desertcart", "ubuy")
@@ -129,7 +131,9 @@ def _in_stock(store: dict) -> bool:
 
 
 def check(serp: Serp, asin: str) -> dict:
+    calls_before = serp.live_calls
     listing, amazon_raw = amazon_product(serp, asin)
+    fresh = serp.live_calls > calls_before   # a replayed listing is not a new reading
     if listing is None:
         # No price usually means the listing is dead, but its title still names the
         # product, so offer the listings that do have a price.
@@ -255,10 +259,13 @@ def check(serp: Serp, asin: str) -> dict:
                   "found": f"{plural(len(web.get('immersive_products', [])), 'product listing')}, "
                            f"{plural(priced_pages, 'retailer page')} with a price"})
 
-    used = open_products(MAX_PRODUCT_PAGES)
+    # Product pages, Lens and the second search add evidence; if SerpApi refuses one
+    # of them (quota, rate limit) the check keeps what it already has.
+    try:
+        used = open_products(MAX_PRODUCT_PAGES)
+    except (DemoMiss, SerpError):
+        used = MAX_PRODUCT_PAGES
 
-    # Still nothing? The precise query may be too narrow ('Prestige PIC 20 Watts'
-    # finds gas stoves), so try the bare brand and model once.
     # Still thin? Google Lens sees the product in the photo and often quotes the
     # sellers it recognises, which is a different index from Shopping's.
     if not enough() and listing.get("thumbnail"):
@@ -281,14 +288,16 @@ def check(serp: Serp, asin: str) -> dict:
         except (DemoMiss, SerpError):
             pass   # an extra look, never required
 
+    # Still nothing? The precise query may be too narrow ('Prestige PIC 20 Watts'
+    # finds gas stoves), so try the bare brand and model once.
     short_q = match.short_query(title, brand, model)
     if not enough() and short_q.lower() != shopping_q.lower():
         try:
             scan_shopping(serp.search(engine="google_shopping", q=short_q, gl="in", hl="en", location="India"), short_q)
-            open_products(max(1, MAX_PRODUCT_PAGES - used))
-        except DemoMiss:
-            # Demo mode only has what was recorded; a missing second try isn't fatal.
-            pass
+            if MAX_PRODUCT_PAGES - used > 0:   # the page budget is shared, not topped up
+                open_products(MAX_PRODUCT_PAGES - used)
+        except (DemoMiss, SerpError):
+            pass   # demo data or a refused search: the second try is optional
 
     final = sorted(offers.values(), key=lambda o: o.price)
     result["offers"] = [asdict(o) for o in final]
@@ -300,8 +309,9 @@ def check(serp: Serp, asin: str) -> dict:
     result["verdict"] = asdict(judge(listing["price"], listing["mrp"], final))
     result["signals"] = signals.report(listing, result["verdict"], result["offers"],
                                        amazon_raw.get("reviews_information"))
-    # Only live checks are worth recording; a replay would just repeat what's there.
-    if not serp.demo:
+    # Only a listing fetched live just now is a new reading; a replay would record
+    # yesterday's price under today's date.
+    if fresh and not serp.demo:
         result["history"] = history.record(listing, result["verdict"])
     else:
         result["history"] = history.load().get(asin, [])

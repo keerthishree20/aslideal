@@ -9,6 +9,7 @@ cache doubles as the demo data for anyone who clones the repo without a key.
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 
 import httpx
@@ -34,7 +35,7 @@ def cache_key(params: dict) -> str:
 
 
 class Serp:
-    def __init__(self, api_key=None, cache_dir=DEFAULT_CACHE, demo=None, transport=None):
+    def __init__(self, api_key=None, cache_dir=DEFAULT_CACHE, demo=None, transport=None, max_age_hours=None):
         self.api_key = api_key if api_key is not None else os.environ.get("SERPAPI_KEY", "")
         if demo is None:
             demo = os.environ.get("DEMO_MODE", "") == "1" or not self.api_key
@@ -43,10 +44,17 @@ class Serp:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self._http = httpx.Client(timeout=120, transport=transport)
         self.live_calls = 0
+        # Recorded answers are reused forever by default: that keeps the committed demo
+        # data stable and the free quota intact. Set CACHE_TTL_HOURS (say 24) to have a
+        # live copy ask again once an answer is older than that. Demo mode never asks.
+        if max_age_hours is None:
+            ttl = os.environ.get("CACHE_TTL_HOURS", "").strip()
+            max_age_hours = float(ttl) if ttl else float("inf")
+        self.max_age = max_age_hours * 3600
 
     def search(self, **params) -> dict:
         path = self.cache_dir / f"{cache_key(params)}.json"
-        if path.exists():
+        if path.exists() and (self.demo or time.time() - path.stat().st_mtime < self.max_age):
             return json.loads(path.read_text())["response"]
         if self.demo:
             raise DemoMiss("This search isn't in the demo data. Add a SERPAPI_KEY to run live searches.")

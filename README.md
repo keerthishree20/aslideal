@@ -80,7 +80,7 @@ One product tells you about one product. A shelf scan checks the advertised deal
 
 ![A shelf scan of wireless earbuds](docs/shelf-scan.png)
 
-A live scan of "wireless earbuds under 2000" found one listing advertising **31% off that is actually 6% dearer** than other stores, and one genuine 21% saving. It costs up to six searches per listing.
+A live scan of "wireless earbuds under 2000" found one listing advertising **31% off that is actually 6% dearer** than other stores, and one genuine 21% saving. It costs up to seven searches per listing.
 
 Every scan exports as CSV — **Download as CSV** on the page, `GET /api/scan.csv?q=...`, or from the command line:
 
@@ -98,7 +98,7 @@ Paste the address of a product photo and SerpApi's `google_lens` engine names th
 
 SerpApi has no price history, so AsliDeal keeps its own: every live check records what it saw that day (Amazon's price, the M.R.P., the street price, the verdict) in `fixtures/history.json`, one reading per product per day. Check the same product next week and the report says what moved — including a change in the M.R.P. itself, which is the interesting one.
 
-Replays from the cache are never recorded, so the demo data stays as it was.
+Replays from the cache are never recorded, so the demo data stays as it was. By default a recorded answer is reused forever, to protect the free quota and keep the demo stable, which also means a re-check shows the same prices. For real history, run with `CACHE_TTL_HOURS=24`: answers older than a day are fetched again, and each fresh fetch becomes a new reading.
 
 ## A card you can share
 
@@ -119,7 +119,7 @@ Every verdict comes from six SerpApi engines. There's no other data source.
 | `google_immersive_product` | Every store behind a grouped Google product, with price, delivery and stock |
 | `google_lens` | Names a product from a photo, and recognises sellers and prices in the listing's own image when the other engines come up short |
 
-A live check costs at most five searches. Every response is cached on disk, so repeating a check is free. The cache also serves as the demo data.
+A live check costs at most seven searches. Every response is cached on disk, so repeating a check is free. The cache also serves as the demo data.
 
 ## How a verdict is reached
 
@@ -157,7 +157,7 @@ The wording states what the prices show and nothing about intent.
 | JBL Tune 520BT | Real saving: 17% below 6 other sellers |
 | Philips HL7756 mixer grinder | Real saving: 10% below 3 other sellers |
 | Prestige PIC 20 induction cooktop | Real saving: 13% below 10 other sellers |
-| Redmi Note 14 Pro 5G (8/128) | Cheaper elsewhere: 15% above the ₹22,644 that 4 sellers charge |
+| Redmi Note 14 Pro 5G (8/128) | Cheaper elsewhere: 11% above the ₹23,290 that 3 sellers charge |
 | Samsung Galaxy M36 5G | Cheaper elsewhere: 5% above 4 other sellers |
 | Noise Pro 6 smart watch | Not enough data: two sellers, ₹5,499 and ₹8,999, no going rate |
 | Samsung Galaxy M56 5G | Listing unavailable on Amazon.in; live listings suggested instead |

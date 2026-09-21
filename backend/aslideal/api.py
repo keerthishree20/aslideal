@@ -119,7 +119,7 @@ def product_history(asin: str):
 
 @app.get("/api/scan")
 def scan_shelf(q: str, limit: int = 5):
-    """Check several advertised deals at once. Costs up to five searches per product."""
+    """Check several advertised deals at once. Costs up to seven searches per product."""
     limit = max(1, min(limit, 10))
     return _answer(pipeline.scan, q, limit)
 
@@ -177,11 +177,20 @@ def search(q: str):
 
 
 @app.get("/api/check/{asin}")
-def check_asin(asin: str):
+def check_asin(asin: str, replay: bool = False):
+    """A full check. replay=1 answers only from recorded data, so the home page's
+    example console never spends a search or writes a history reading."""
     asin = parse_asin(asin)
     if not asin:
         raise HTTPException(400, "That isn't an Amazon product ID.")
-    result = _answer(check, asin)
+    if replay:
+        recorded = Serp(api_key="", cache_dir=serp.cache_dir, demo=True)
+        try:
+            result = check(recorded, asin)
+        except DemoMiss as e:
+            raise HTTPException(404, str(e))
+    else:
+        result = _answer(check, asin)
     if result.get("unavailable"):
         return result          # dead listing, but we can point at live ones
     if "error" in result:

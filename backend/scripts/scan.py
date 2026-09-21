@@ -2,7 +2,7 @@
 
     python -m scripts.scan "wireless earbuds under 2000" --limit 5 --csv earbuds.csv
 
-A live scan costs up to six SerpApi searches per listing; anything already in the
+A live scan costs up to seven SerpApi searches per listing; anything already in the
 cache is free, and DEMO_MODE=1 uses the cache only.
 """
 

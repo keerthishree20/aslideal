@@ -17,8 +17,9 @@ differently, so they aren't required.
 2. The candidate's name must not add a tier word (pro, max, plus...) the
    reference lacks: '15' is in 'iPhone 15 Pro' too.
 3. The brand has to appear. A reference with no brand isn't matched at all.
-4. A reference that states its memory (8GB, 128GB), or a count of jars or
-   packs, only matches listings stating the same.
+4. A reference that states its memory (8GB, 128GB), or a count of jars,
+   packs or sets, only matches listings stating the same; a listing must at
+   least state the storage, since '8GB RAM' alone could be the 128GB model.
 5. If the reference's name says what the product is after the model number
    ('Pro 6 Smart Watch'), the candidate must share one of those words:
    'Air Buds Pro 6' is earbuds.
@@ -114,15 +115,26 @@ def describing_words(title: str, brand: str = "") -> set:
     return out
 
 
-# '4 Jars' and '3 Jars' are different SKUs of the same mixer, at different prices.
-_COUNTED = re.compile(r"(\d+)\s*(?:[a-z]+\s+){0,3}(jars?|packs?)\b")
+# '4 Jars' and '3 Jars' are different SKUs of the same mixer, at different prices,
+# and so are 'Pack of 2' and 'Pack of 3'. Sellers write the count before the noun
+# ('3 Stainless Steel Jars', '3 Pack') or after it ('Pack of 3', Amazon's usual form).
+_COUNT_BEFORE = re.compile(r"(\d+)\s*(?:[a-z]+\s+){0,3}(jars?|packs?|sets?)\b")
+_COUNT_AFTER = re.compile(r"\b(packs?|sets?)\s+of\s+(\d+)\b")
 
 
 def counts(text: str) -> dict:
+    text = (text or "").lower()
     out = {}
-    for n, noun in _COUNTED.findall((text or "").lower()):
+    for n, noun in _COUNT_BEFORE.findall(text):
+        out.setdefault(noun.rstrip("s"), set()).add(int(n))
+    for noun, n in _COUNT_AFTER.findall(text):
         out.setdefault(noun.rstrip("s"), set()).add(int(n))
     return out
+
+
+def _gigabytes(token: str) -> int:
+    n = int(re.match(r"\d+", token).group())
+    return n * 1024 if token.endswith("tb") else n
 
 
 def is_accessory(candidate: str, reference: str) -> bool:
@@ -173,9 +185,16 @@ def same_product(reference: str, candidate: str, brand: str = "", model: str = "
             return False
     ref_caps = {t for t in tokens(reference) if _CAPACITY.match(t)}
     cand_caps = {t for t in cand_tokens if _CAPACITY.match(t)}
-    if ref_caps and (not cand_caps or not cand_caps <= ref_caps):
-        return False
-    if not brand or not set(tokens(brand)) <= cand_tokens:
+    if ref_caps:
+        # Every size the candidate states must be one of the reference's, and it must
+        # state the storage (the largest): '8GB RAM' alone could be the 128GB model.
+        storage = max(ref_caps, key=_gigabytes)
+        if not cand_caps or not cand_caps <= ref_caps or storage not in cand_caps:
+            return False
+    # Filler words are dropped from the candidate, so drop them from the brand too:
+    # 'The Derma Co' has to match on 'derma co'.
+    brand_words = set(tokens(brand)) - FILLER
+    if not brand_words or not brand_words <= cand_tokens:
         return False
     if is_accessory(candidate, reference):
         return False

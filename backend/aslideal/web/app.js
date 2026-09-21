@@ -179,7 +179,9 @@ function renderFilters(cards) {
 
 async function replayConsole(c) {
   let r;
-  try { r = await api("/api/check/" + c.asin); } catch { return; }
+  // replay=1: the example only ever uses recorded data, so loading the home page
+  // never spends a search or writes a price-history reading.
+  try { r = await api("/api/check/" + c.asin + "?replay=1"); } catch { return; }
   const L = r.listing;
   $("c-title").textContent = "check " + L.asin;
   $("c-img").src = L.thumbnail || "";

@@ -149,7 +149,7 @@ serp.py ── fixtures/cache/<hash>.json  (cache + demo data)
 | `google` (`gl=in`) | popular-product results and retailer pages with a price in the snippet |
 | `google_immersive_product` | every store behind a grouped Google product |
 
-A live check costs **at most five searches**.
+A live check costs **at most seven searches**: the Amazon listing, Google Shopping, Google search, two product pages shared between both Shopping searches, Google Lens, and one shorter Shopping search when sellers are thin.
 
 ---
 
@@ -416,7 +416,7 @@ search.
 | Method | Path | Returns |
 |---|---|---|
 | GET | `/api/status` | demo or live, searches left, recorded products |
-| GET | `/api/scan?q=&limit=` | checks several advertised deals for one search and aggregates them; up to five searches per listing, capped at ten listings |
+| GET | `/api/scan?q=&limit=` | checks several advertised deals for one search and aggregates them; up to seven searches per listing, capped at ten listings |
 | GET | `/api/scan.csv?q=&limit=` | the same shelf scan as a CSV download |
 | GET | `/api/lens?url=` | `google_lens` names the product in a photo, then returns Amazon.in matches and the prices Lens saw |
 | GET | `/api/history/{asin}` | every reading a live check recorded for one product, and what moved since the first |

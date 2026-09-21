@@ -60,13 +60,12 @@ function el(tag, attrs = {}, ...kids) {
   return n;
 }
 
+// Only a product page counts. Search and home pages are full of [data-asin]
+// carousels, and checking whichever product happens to come first would spend
+// searches on something the shopper never looked at.
 function findAsin() {
   const fromUrl = ASIN_IN_URL.exec(location.pathname);
-  if (fromUrl) return fromUrl[1];
-  const input = document.querySelector("#ASIN, input[name='ASIN.0'], input[name='ASIN']");
-  if (input && /^[A-Z0-9]{10}$/.test(input.value)) return input.value;
-  const tagged = document.querySelector("[data-asin]:not([data-asin=''])");
-  return tagged ? tagged.getAttribute("data-asin") : null;
+  return fromUrl ? fromUrl[1] : null;
 }
 
 function mount() {
@@ -130,6 +129,12 @@ function run() {
       return showError(body, chrome.runtime.lastError?.message || "The extension couldn't reach its background worker.", "http://localhost:8000");
     }
     if (!reply.ok) return showError(body, reply.error, reply.server);
+    // A dead listing comes back without a verdict, with live listings to try instead.
+    if (reply.data.unavailable || !reply.data.verdict) {
+      const n = (reply.data.suggestions || []).length;
+      return showError(body, (reply.data.error || "No verdict for this listing.") +
+        (n ? ` AsliDeal found ${n} live listing${n === 1 ? "" : "s"} of the same product.` : ""), reply.server);
+    }
     showVerdict(body, reply.data, reply.server);
   });
 }
