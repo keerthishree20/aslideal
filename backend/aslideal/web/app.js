@@ -388,10 +388,15 @@ async function onScan(e) {
   btn.disabled = true; btn.textContent = "Scanning…";
   $("scan-headline").hidden = true;
   $("scan-results").hidden = true;
+  $("scan-csv").hidden = true;
   try {
     const r = await api(`/api/scan?q=${encodeURIComponent(q)}&limit=${$("scan-n").value}`);
     $("scan-headline").textContent = r.headline;
     $("scan-headline").hidden = false;
+    // The CSV is the same scan again, answered from the cache, so it costs nothing extra.
+    const csv = $("scan-csv");
+    csv.href = `/api/scan.csv?q=${encodeURIComponent(q)}&limit=${$("scan-n").value}`;
+    csv.hidden = false;
     $("scan-rows").replaceChildren(...r.rows.map((row) => {
       const kind = KINDS[row.kind] || { label: row.headline || "couldn't check", icon: "?" };
       return el("tr", {},

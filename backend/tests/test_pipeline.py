@@ -62,3 +62,15 @@ def test_seller_name_falls_back_to_the_link_host():
     assert seller_from("", "https://mymec.in/product/x", "Havells Instanio") == "Mymec"
     # a real shop name is kept as it is
     assert seller_from("Vijay Sales", "https://www.vijaysales.com/p", "Samsung Galaxy M36") == "Vijay Sales"
+
+
+def test_gallery_is_rebuilt_only_when_the_cache_changes(monkeypatch):
+    from aslideal import api
+    calls = []
+    monkeypatch.setattr(api, "_build_gallery", lambda: calls.append(1) or [{"asin": "x"}])
+    api._gallery_memo.update(key=None, cards=None)
+    api.gallery(); api.gallery()
+    assert len(calls) == 1                      # second load served from memory
+    monkeypatch.setattr(api, "_cache_signature", lambda: ("changed",))
+    api.gallery()
+    assert len(calls) == 2                      # a new recording rebuilds it

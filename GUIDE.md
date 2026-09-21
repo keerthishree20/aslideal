@@ -417,6 +417,7 @@ search.
 |---|---|---|
 | GET | `/api/status` | demo or live, searches left, recorded products |
 | GET | `/api/scan?q=&limit=` | checks several advertised deals for one search and aggregates them; up to five searches per listing, capped at ten listings |
+| GET | `/api/scan.csv?q=&limit=` | the same shelf scan as a CSV download |
 | GET | `/api/lens?url=` | `google_lens` names the product in a photo, then returns Amazon.in matches and the prices Lens saw |
 | GET | `/api/history/{asin}` | every reading a live check recorded for one product, and what moved since the first |
 | GET | `/api/gallery` | a verdict summary per recorded product, with `screened` and `left_out` counts; **always from the cache**, so the home page never spends a search |
@@ -604,7 +605,7 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 | 11 | Console replay, counters, gallery filters | Frontend | `app.js`, `index.html` |
 | 12 | Report: gauges, price chart, trail, evidence funnel | Frontend | `app.js`, `style.css` |
 | 13 | `#check/ASIN` links | Frontend | `app.js` |
-| 14 | 40 tests + two frozen evaluation sets (11/14) | Testing | `tests/`, `scripts/evaluate.py` |
+| 14 | 41 tests + two frozen evaluation sets (11/14) | Testing | `tests/`, `scripts/evaluate.py` |
 | 15 | One-command start | Tooling | `run.sh` |
 | 16 | Chrome extension: verdict on the Amazon.in page | Frontend | `extension/` |
 | 17 | Shorter fallback search + manufacturer model codes | Core | `match.py`, `pipeline.py` |
@@ -621,6 +622,8 @@ DEMO_MODE=1 .venv/bin/python -m scripts.evaluate    # replay from fixtures
 | 28 | No street price from two sellers who disagree | Core | `verdict.py` |
 | 29 | Unavailable listing suggests live ones instead | Backend | `pipeline.py` |
 | 30 | CI on every push, MIT licence | Tooling | `.github/workflows/tests.yml`, `LICENSE` |
+| 31 | Shelf scan as CSV (page, `/api/scan.csv`, `scripts/scan.py`) | Backend | `api.py`, `scripts/scan.py` |
+| 32 | Gallery kept in memory until the recorded data changes (0.56 s to 0.007 s) | Backend | `api.py` |
 
 ### Data Flow Architecture
 

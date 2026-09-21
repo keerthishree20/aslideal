@@ -80,7 +80,15 @@ One product tells you about one product. A shelf scan checks the advertised deal
 
 ![A shelf scan of wireless earbuds](docs/shelf-scan.png)
 
-A live scan of "wireless earbuds under 2000" found one listing advertising **31% off that is actually 6% dearer** than other stores, and one genuine 21% saving. It costs up to five searches per listing.
+A live scan of "wireless earbuds under 2000" found one listing advertising **31% off that is actually 6% dearer** than other stores, and one genuine 21% saving. It costs up to six searches per listing.
+
+Every scan exports as CSV — **Download as CSV** on the page, `GET /api/scan.csv?q=...`, or from the command line:
+
+```bash
+cd backend && .venv/bin/python -m scripts.scan "wireless earbuds under 2000" --limit 5 --csv earbuds.csv
+```
+
+The full HTTP API is documented at `/docs` on a running copy (FastAPI's interactive docs).
 
 ## Check from a photo
 

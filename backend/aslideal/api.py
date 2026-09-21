@@ -6,12 +6,15 @@ Without a SERPAPI_KEY (or with DEMO_MODE=1) every answer comes from the
 recorded responses in fixtures/cache, so the app works on a fresh clone.
 """
 
+import csv
+import io
 import json
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from . import history
@@ -58,10 +61,31 @@ def status():
     return {"demo": serp.demo, "quota": quota, "samples": recorded_listings()}
 
 
+_gallery_memo = {"key": None, "cards": None}
+
+
+def _cache_signature():
+    """Changes whenever a response is added to or rewritten in the cache."""
+    files = list(serp.cache_dir.glob("*.json"))
+    return len(files), max((f.stat().st_mtime_ns for f in files), default=0)
+
+
 @app.get("/api/gallery")
 def gallery():
     """Verdicts for every product in the recorded data. Always replayed, never live,
-    so opening the home page doesn't spend searches."""
+    so opening the home page doesn't spend searches.
+
+    Replaying every product on every page load grows with the cache, so the result
+    is kept until the recorded data changes."""
+    key = _cache_signature()
+    if _gallery_memo["key"] == key:
+        return _gallery_memo["cards"]
+    cards = _build_gallery()
+    _gallery_memo.update(key=key, cards=cards)
+    return cards
+
+
+def _build_gallery():
     recorded = Serp(api_key="", cache_dir=serp.cache_dir, demo=True)
     cards = []
     for sample in recorded_listings():
@@ -98,6 +122,24 @@ def scan_shelf(q: str, limit: int = 5):
     """Check several advertised deals at once. Costs up to five searches per product."""
     limit = max(1, min(limit, 10))
     return _answer(pipeline.scan, q, limit)
+
+
+SCAN_COLUMNS = ["asin", "title", "brand", "price", "mrp", "claimed_discount", "street_price",
+                "real_discount", "sellers", "kind", "flagged", "headline", "link"]
+
+
+@app.get("/api/scan.csv")
+def scan_csv(q: str, limit: int = 5):
+    """The same shelf scan as a spreadsheet, for anyone comparing deals over time."""
+    result = scan_shelf(q, limit)
+    out = io.StringIO()
+    writer = csv.DictWriter(out, fieldnames=SCAN_COLUMNS, extrasaction="ignore")
+    writer.writeheader()
+    for row in result["rows"]:
+        writer.writerow({k: row.get(k, "") for k in SCAN_COLUMNS})
+    slug = re.sub(r"[^a-z0-9]+", "-", q.lower()).strip("-")[:40] or "scan"
+    return Response(out.getvalue(), media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="aslideal-{slug}.csv"'})
 
 
 @app.get("/api/lens")
