@@ -12,7 +12,9 @@ Amazon.in shows almost every product with a struck-through M.R.P. and a big perc
 
 Each report shows the verdict as two gauges (claimed discount vs real saving), every matching seller on one price axis with the M.R.P. and street price marked, the SerpApi calls that produced the evidence, and every listing that was left out and why. Checks can also come out the other way, as with the JBL Tune 520BT, where Amazon is really 17% cheaper: [report](docs/jbl-report.png).
 
-**Demo video** (2 min 36 s, narrated): [`docs/asli-deal-demo.mp4`](docs/asli-deal-demo.mp4)
+**Demo video** (2 min 36 s, narrated): **[watch on YouTube](https://youtu.be/Dsj37lE1O2I)** · [download the file](docs/asli-deal-demo.mp4)
+
+[![AsliDeal demo video](docs/thumbnail.png)](https://youtu.be/Dsj37lE1O2I)
 
 ## Run it
 
